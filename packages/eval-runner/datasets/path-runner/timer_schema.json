@@ -1,0 +1,19 @@
+{
+  "anchors": [
+    {"id": "T0_launch", "label_zh": "应用启动"},
+    {"id": "T1_identity", "label_zh": "身份选择完成"},
+    {"id": "T2_diagnosis", "label_zh": "诊断结果出现"},
+    {"id": "T3_evidence_basic", "label_zh": "基础证据 3 件录入"},
+    {"id": "T4_compute", "label_zh": "计算结果展示"},
+    {"id": "T5_doc_draft", "label_zh": "首份文书草稿生成"},
+    {"id": "T6_review", "label_zh": "用户审阅与编辑完成"},
+    {"id": "T7_export", "label_zh": "卷宗包导出完成"}
+  ],
+  "duration_target_min_minutes": 30,
+  "duration_target_max_minutes": 60,
+  "phase_target": {
+    "T0->T2": "<=10 min",
+    "T2->T4": "<=15 min",
+    "T4->T7": "<=35 min"
+  }
+}

@@ -1,0 +1,128 @@
+# .github/workflows/release.yml
+#
+# Spec: deploy/00-deploy-index.md 0.4 (L0 release-blocking points) + deploy/01-windows-build.md
+# 1.6 + ai/05 5.10 (pre_release total gate is the single release valve). This workflow turns a
+# version tag into a GitHub Release.
+#
+# HARD GUARD (deploy/00 0.4 + tools/release/check_l0_guard.py): a PUBLIC BINARY release (installer
+# / .msix attached to the Release) is permitted ONLY when BOTH L0-01 (legal subject confirmed) and
+# L0-02 (law-firm filing-exemption opinion == exempt) hold. Until then the project ships SOURCE
+# ONLY: this workflow always publishes a SOURCE.tar.gz (+ GPG signature when the key seam is
+# satisfied) and attaches binaries ONLY when check_l0_guard.py unlocks them. This is the real
+# current legal state (the guard BLOCKS today by design), not a placeholder.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # 1) The single release valve: every quality gate must pass before anything is published.
+  pre-release-gate:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.84"
+          targets: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.27.1
+          channel: stable
+          cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Flutter desktop + deps
+        run: |
+          flutter config --enable-windows-desktop
+          cd frontend && flutter pub get
+      - name: Editor deps
+        working-directory: editor
+        run: npm ci
+      - name: Pre-release total gate (ai/05 5.10)
+        run: python tools/ci/pre_release.py
+
+  # 2) Decide the release mode from the REAL L0 legal status.
+  l0-guard:
+    needs: pre-release-gate
+    runs-on: ubuntu-22.04
+    outputs:
+      allow_binary: ${{ steps.guard.outputs.allow_binary }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Evaluate L0-01 / L0-02 binary-release guard
+        id: guard
+        shell: bash
+        run: |
+          set +e
+          OUT=$(python tools/release/check_l0_guard.py --json)
+          echo "$OUT"
+          if echo "$OUT" | grep -q '"allow_binary": true'; then
+            echo "allow_binary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "allow_binary=false" >> "$GITHUB_OUTPUT"
+          fi
+          set -e
+
+  # 3) SOURCE release: ALWAYS permitted under GPLv3 (deploy/00 0.4). Runs regardless of L0 status.
+  source-release:
+    needs: l0-guard
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create source tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          git archive --format=tar.gz --prefix="stuchka-${VERSION}/" -o "stuchka-${VERSION}-SOURCE.tar.gz" HEAD
+      - name: GPG sign source tarball
+        if: ${{ env.GPG_PRIVATE_KEY != '' }}
+        shell: bash
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
+              --detach-sign --armor --output "stuchka-${GITHUB_REF_NAME}-SOURCE.tar.gz.asc" \
+              "stuchka-${GITHUB_REF_NAME}-SOURCE.tar.gz"
+      - name: Publish source release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            stuchka-*-SOURCE.tar.gz
+            stuchka-*-SOURCE.tar.gz.asc
+          body: |
+            Stučka source release. Binaries are attached ONLY when the L0-01 (legal subject) and
+            L0-02 (law-firm filing-exemption opinion) preconditions hold (deploy/00 0.4). Until then,
+            build from source per the README build instructions.
+          fail_on_unmatched_files: false
+
+  # 4) BINARY release: gated on the L0 guard. Skipped (not failed) while L0 blocks public binaries.
+  binary-release:
+    needs: l0-guard
+    if: ${{ needs.l0-guard.outputs.allow_binary == 'true' }}
+    uses: ./.github/workflows/build-windows.yml
+    secrets: inherit

@@ -1,0 +1,20 @@
+[project]
+name = "stuchka-eval-runner"
+version = "0.1.0"
+description = "Stučka evaluation harness (ai/05): orchestrates the Rust eval-cli oracle + asserts the §5.3 上线门槛 over genuine datasets."
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+# pydantic + rich are the spec-declared (ai/05 §5.1) validation + reporting libs. They are SOFT deps:
+# the runner degrades to a stdlib-only path when they are absent (cross-machine robustness), so
+# `python -m eval_runner.cli` runs anywhere with cargo + Python; install these for strict validation.
+dependencies = []
+
+[project.optional-dependencies]
+full = ["pydantic>=2.10", "rich>=13.9", "pytest>=8.3"]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

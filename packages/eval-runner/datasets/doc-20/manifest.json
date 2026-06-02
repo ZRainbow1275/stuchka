@@ -1,0 +1,17 @@
+{
+  "dataset": "doc-20",
+  "spec": "0529/spec/ai/05-evaluation-set.md §5.4",
+  "threshold_automated": "GB45438 four-layer completeness == 1.0 over all 20 documents",
+  "threshold_human": "文书可用率 >= 70% — HUMAN process gate (3 lawyers, NDA blind). See README.md + blind_rubrics_template.csv. NOT decided automatically.",
+  "ground_truth": "Each of the 6 hard templates x 3 scenarios + 2 fallback = 20 documents is generated through the REAL document::export_dossier (the UNIQUE four-layer injection path, INV-02). LayerCompleteness.assert_all_true() must hold on every one (L1 explicit + L2 metadata + L3 zero-width + L3 LSB + L4 manifest). The eval-cli enumerates TemplateId::ALL x scenarios; this manifest documents the scenario set.",
+  "templates": [
+    "仲裁申请书 (arbitration application)",
+    "调解申请书 (mediation application)",
+    "劳动监察投诉书 (labor inspection complaint)",
+    "和解协议 (settlement agreement)",
+    "起诉状（一审） (first-instance lawsuit)",
+    "执行申请书 (enforcement application)"
+  ],
+  "scenarios": ["migrant_wage_arrears", "illegal_dismissal_compensation", "work_injury_benefit"],
+  "fallback": 2
+}

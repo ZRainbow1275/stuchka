@@ -1455,6 +1455,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "eval-cli"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "data-model",
+ "document",
+ "hsd",
+ "rule-engine",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "event-listener"
 version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,37 @@
+[package]
+name = "eval-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# eval-cli — the genuine compute oracle for the Stučka evaluation harness (ai/05).
+#
+# It links the REAL production crates (rule-engine M9/M5, hsd, document GB45438, data-model LawRef)
+# as libraries and runs the evaluation datasets against them, emitting a per-case JSON report.
+# It performs NO threshold judgement itself (the Python `packages/eval-runner` owns the §5.3
+# thresholds) — it only reports the genuine actual-vs-expected outcome per case, so a mis-derived
+# expected value surfaces as a real failure (it can never silently pass). Ground truth is DERIVED
+# from the law formulas / the existing golden fixtures, never fabricated.
+[[bin]]
+name = "stuchka-eval"
+path = "src/main.rs"
+
+[dependencies]
+data-model.workspace = true
+rule-engine.workspace = true
+hsd.workspace = true
+# Direct path dep (not the workspace alias) so `default-features = false` actually applies: it drops
+# the optional `audit`/`db` (sqlx + tokio) wiring. export_dossier and the four GB45438 layers are NOT
+# feature-gated, so the genuine completeness pipeline stays available while the binary stays light.
+document = { path = "../document", default-features = false }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde", "macros"] }
+uuid = { version = "1", features = ["v7"] }
+
+[dev-dependencies]
+# The smoke tests run every gate over the REAL datasets under packages/eval-runner/datasets and
+# assert the §5.3 thresholds, so `cargo test --workspace` enforces the eval gates too (belt + braces).

@@ -1,0 +1,6 @@
+case_id,fact_id,kind,expected,reviewer_id,time_correct,amount_correct,party_correct,relation_correct,evidence_correct,basically_correct,notes
+F001_illegal_dismiss_GD,F001-001,EmploymentStart,2016-03-01,,,,,,,,
+F001_illegal_dismiss_GD,F001-002,EmploymentEnd,2024-03-01,,,,,,,,
+F001_illegal_dismiss_GD,F001-003,MonthlyWage,8000,,,,,,,,
+F002_overtime_GD,F002-001,MonthlyWage,8700,,,,,,,,
+F002_overtime_GD,F002-002,WeekdayOvertimeHours,10,,,,,,,,

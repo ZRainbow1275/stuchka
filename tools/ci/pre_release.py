@@ -12,6 +12,8 @@ Gates:
   backend   cargo clippy --workspace -D warnings
   editor    npm run build && npm test          (vite UMD build + vitest)
   frontend  flutter analyze && flutter test    (analyze 0 issues + 60 widget tests)
+  ai-eval   packages/eval-runner (drives the Rust eval-cli oracle): calc-50==100%, deadline-30==100%,
+            doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100% (ai/05 §5.3)
   compliance tools/qa/check_readme_first_line.py   (GPLv3 README first-line, byte-for-byte)
   compliance tools/triage/keyword_matcher.py --self-test  (Issues triage >=95% accuracy)
   product   no-emoji scan over the whole source tree (zero Emoji invariant)
@@ -175,6 +177,49 @@ def run_emoji_scan(gate: Gate) -> None:
         gate.detail = "0 Emoji across %d source files" % scanned
 
 
+def run_eval_gates(gate: Gate, skip_missing: bool) -> None:
+    """Run the ai/05 §5.3 evaluation gates via the Python eval-runner, which drives the genuine
+    Rust eval-cli oracle (real rule-engine/hsd/document/data-model). REQUIRED: calc-50==100%,
+    deadline-30==100%, doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100%.
+    Human-graded gates (doc usability, law accuracy, fact-30) + R1b abstention-300 are reported but
+    do not block. The oracle needs cargo; absent + --skip-missing downgrades to SKIP."""
+    start = time.time()
+    if shutil.which("cargo") is None:
+        gate.seconds = time.time() - start
+        if skip_missing:
+            gate.status = "SKIP"
+            gate.detail = "cargo not on PATH (--skip-missing); eval oracle needs it"
+        else:
+            gate.status = "FAIL"
+            gate.detail = "cargo not on PATH (eval oracle needs it, or use --skip-missing)"
+        return
+    env = os.environ.copy()
+    pkg = os.path.join(PROJECT_ROOT, "packages", "eval-runner", "python")
+    env["PYTHONPATH"] = pkg + os.pathsep + env.get("PYTHONPATH", "")
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "eval_runner.cli"], cwd=PROJECT_ROOT, env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=1800,
+        )
+        out = proc.stdout.decode("utf-8", errors="replace")
+        gate.seconds = time.time() - start
+        result_lines = [ln for ln in out.splitlines() if ln.startswith("RESULT")]
+        gate.status = "PASS" if proc.returncode == 0 else "FAIL"
+        if result_lines:
+            gate.detail = result_lines[-1]
+        else:
+            gate.detail = "exit=%d  %s" % (
+                proc.returncode, "\n".join(out.strip().splitlines()[-4:]).replace("\n", " | "))
+    except subprocess.TimeoutExpired:
+        gate.seconds = time.time() - start
+        gate.status = "FAIL"
+        gate.detail = "timeout after 1800s"
+    except Exception as exc:  # noqa: BLE001
+        gate.seconds = time.time() - start
+        gate.status = "FAIL"
+        gate.detail = "error: %s" % exc
+
+
 def run_l0_guard_informational(gate: Gate) -> None:
     """check_l0_guard exits 1 by design when binary release is blocked. That is the
     real current legal state and is NOT a pre-release failure for a SOURCE release,
@@ -245,6 +290,12 @@ def main(argv=None) -> int:
         print("\n>>> %s ..." % gate.name, flush=True)
         run_subprocess_gate(gate, args.skip_missing)
         print("    %-5s (%.1fs)  %s" % (gate.status, gate.seconds, gate.detail[:160]))
+
+    eval_gate = Gate("ai-eval §5.3 gates", PROJECT_ROOT, [], tool=None)
+    print("\n>>> %s ..." % eval_gate.name, flush=True)
+    run_eval_gates(eval_gate, args.skip_missing)
+    print("    %-5s (%.1fs)  %s" % (eval_gate.status, eval_gate.seconds, eval_gate.detail[:160]))
+    gates.append(eval_gate)
 
     emoji_gate = Gate("product zero-Emoji scan", PROJECT_ROOT, [], tool=None)
     print("\n>>> %s ..." % emoji_gate.name, flush=True)

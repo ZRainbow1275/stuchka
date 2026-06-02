@@ -51,6 +51,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # .msix packaging (deploy/01 §1.5). Pinned ^3.16.x per deploy/00 §0.7 baseline.
+  # Consumed only by `dart run msix:create` (scripts/build/build_msix.ps1); it does not
+  # participate in `flutter analyze` / `flutter test`, so it never affects the existing
+  # 64 widget tests. The signing certificate is the OV/EV seam (see sign-windows.ps1).
+  msix: ^3.16.7
+
   # 仅测试用：web_socket_channel 的底层抽象。S1 的 yjs_ws_provider_test 用其真实的
   # AdapterWebSocketChannel 构造一个“连接挂起”的真实 WebSocketChannel（非 mock），
   # 以便在不开真实 socket 的前提下断言 Authorization Bearer 头。
@@ -72,6 +78,24 @@ dev_dependencies:
   # analyzer: ^8.4.0
   # stuchka_lints:
   #   path: tools/lints
+
+# .msix packaging config (deploy/01-windows-build.md §1.5). Consumed by `dart run msix:create`.
+# architecture x64; store:false (Store listing gated on L0-02). logo_path is a documented SEAM:
+# the brand logo PNG is supplied at release time; msix:create only reads it at package time, so
+# its absence never breaks `flutter analyze`/`flutter test`.
+msix_config:
+  display_name: Stučka
+  publisher_display_name: Stučka 项目方
+  identity_name: cn.stuchka.desktop
+  msix_version: 0.1.0.1
+  publisher: CN=Stuchka Foundation, O=Stuchka Foundation, C=CN
+  logo_path: assets/icons/logo.png
+  capabilities: internetClient, removableStorage
+  architecture: x64
+  store: false
+  enable_at_startup: false
+  app_uri_handler_hosts: stuchka.cn
+  languages: zh-cn
 
 flutter:
   uses-material-design: true

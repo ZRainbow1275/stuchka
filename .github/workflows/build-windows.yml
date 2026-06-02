@@ -1,0 +1,162 @@
+# .github/workflows/build-windows.yml
+#
+# Spec: deploy/01-windows-build.md 1.6 (GitHub Actions CI) + ai/05 5.10 (pre_release total gate is
+# the single release valve). Adapted to this repo's real layout: Rust workspace under backend/,
+# Flutter under frontend/, Tiptap editor under editor/. R1 single-platform: windows-2022 only.
+#
+# Flow (deploy/01 1.6 + ai/05 5.10): setup -> lint/test -> pre_release total gate -> build dual
+# binary -> trim/assert -> sign (tagged) -> installer -> msix -> gpg-sign update package.
+# Signing / GPG / ISCC steps are guarded so the workflow is valid even before the cert/key seams
+# are satisfied (they run only on tag pushes when the corresponding secrets exist).
+
+name: Build Windows Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # Reusable by release.yml's binary-release job (only invoked once the L0 guard unlocks binaries).
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    env:
+      FLUTTER_VERSION: 3.27.1
+      RUST_TOOLCHAIN: "1.84"
+      INNO_SETUP_VERSION: 6.2.2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust (MSRV 1.84, D6)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          targets: x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Setup Node (editor build)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python (pre_release gate driver)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Flutter pub get
+        working-directory: frontend
+        run: flutter pub get
+
+      - name: Editor npm ci
+        working-directory: editor
+        run: npm ci
+
+      - name: Pre-release total gate (single release valve, ai/05 5.10)
+        run: python tools/ci/pre_release.py
+
+      - name: Build Rust core subprocess (release, D1)
+        working-directory: backend
+        run: cargo build --release --bin stuchka-core --target x86_64-pc-windows-msvc
+
+      - name: Build Release (Flutter, obfuscated + split debug info)
+        working-directory: frontend
+        run: flutter build windows --release --obfuscate --split-debug-info=build\symbols
+
+      - name: Trim release artifacts (copies stuchka-core.exe + asserts dual binary, size gate)
+        shell: pwsh
+        run: ./scripts/build/trim_release.ps1
+
+      - name: Decode signing certificate
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.WINDOWS_CERT_BASE64 != '' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+        run: |
+          $bytes = [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64)
+          [IO.File]::WriteAllBytes("cert.pfx", $bytes)
+
+      - name: Sign executables (dual binary, D1)
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.WINDOWS_CERT_THUMBPRINT != '' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
+        run: |
+          ./scripts/sign/sign-windows.ps1 -FilePath "frontend\build\windows\x64\runner\Release\stuchka.exe" -CertThumbprint "$env:WINDOWS_CERT_THUMBPRINT"
+          ./scripts/sign/sign-windows.ps1 -FilePath "frontend\build\windows\x64\runner\Release\stuchka-core.exe" -CertThumbprint "$env:WINDOWS_CERT_THUMBPRINT"
+
+      - name: Install Inno Setup
+        run: choco install innosetup --version=${{ env.INNO_SETUP_VERSION }} -y
+
+      - name: Build installer
+        working-directory: installer
+        run: iscc /Qp setup.iss
+
+      - name: Sign installer
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.WINDOWS_CERT_THUMBPRINT != '' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERT_THUMBPRINT: ${{ secrets.WINDOWS_CERT_THUMBPRINT }}
+        run: |
+          Get-ChildItem "installer\output\Stuchka-Setup-*.exe" | ForEach-Object {
+            ./scripts/sign/sign-windows.ps1 -FilePath $_.FullName -CertThumbprint "$env:WINDOWS_CERT_THUMBPRINT"
+          }
+
+      - name: Build MSIX
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.WINDOWS_CERT_PASSWORD != '' }}
+        env:
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        shell: pwsh
+        run: ./scripts/build/build_msix.ps1 -CertPath "cert.pfx" -CertPassword "$env:WINDOWS_CERT_PASSWORD"
+
+      - name: GPG sign update package
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && env.GPG_PRIVATE_KEY != '' }}
+        shell: bash
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+          for f in installer/output/Stuchka-Setup-*.exe; do
+            gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" \
+                --detach-sign --armor --output "${f}.asc" "${f}"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            installer/output/Stuchka-Setup-*.exe
+            installer/output/Stuchka-Setup-*.exe.asc
+            frontend/build/windows/x64/runner/Release/*.msix
+            frontend/build/symbols/
+          retention-days: 30
+          if-no-files-found: warn

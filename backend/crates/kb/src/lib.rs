@@ -14,6 +14,9 @@
 //! - [`fetch`] — endpoint fallback resolution (GitHub Pages → jsDelivr → mirror → local cache).
 //! - [`git_pull`] — git pull diff skeleton (gix) + the REAL checksums/global_hash integrity gates
 //!   (KBC-02/04).
+//! - [`gpg`] — the REAL KB-package detached-signature verify path (deploy/04 §4.4.3): shells out
+//!   to the system `gpg` against the pre-deployed `stuchka-kb-pubkey.asc` keyring, returning
+//!   `E_KB_SIGNATURE_INVALID` on a bad signature (the gate that must fire 100%).
 //! - [`search`] — BM25 single-path hybrid search with Chinese segmentation (tantivy + jieba),
 //!   reserving the vector leg behind the [`search::LawSearch`] trait (backend/01 §1.7.2).
 //! - [`sample_data`] — 22 real PRC labour-law clauses across the five R1 deep categories, seeding
@@ -28,6 +31,7 @@ pub mod error;
 pub mod fetch;
 pub mod freshness;
 pub mod git_pull;
+pub mod gpg;
 pub mod impact;
 pub mod manifest;
 pub mod sample_data;
@@ -52,6 +56,7 @@ pub use git_pull::{
     diff_to_tag, parse_checksums, verify_checkout, verify_checksums, verify_manifest_global_hash,
     DiffSummary,
 };
+pub use gpg::{GpgVerifier, KbGpgError};
 pub use impact::{changed_law_refs, ImpactNotice};
 pub use manifest::{
     compute_global_hash, file_content_hash, KbManifest, CATEGORY_TOTAL, SUBCATEGORY_TOTAL,

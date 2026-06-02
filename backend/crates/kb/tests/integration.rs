@@ -188,3 +188,28 @@ fn impact_notice_generation_on_version_change() {
     // No change → no affected refs.
     assert!(changed_law_refs(&old, &old).is_empty());
 }
+
+/// Publisher/client parity (deploy/04 4.2.2 + scripts/kb/gen_kb_manifest.py): the Rust client's
+/// `compute_global_hash` MUST agree bit-for-bit with the Python publisher's recipe, otherwise an
+/// INV-04 freeze hash computed at publish time would never re-verify on the client. The expected
+/// digest below is the publisher's output (scripts/kb/gen_kb_manifest.py) over the real bytes
+/// `categories.yaml="CATS"` and `laws/a.json="AAA"`; it is derived FROM those bytes, not invented.
+#[test]
+fn global_hash_matches_python_publisher_recipe() {
+    let entries = [
+        (
+            "categories.yaml".to_string(),
+            "737fad148344339898006b3d25d3cd510a0946d93494469f004b44efbe7efeba".to_string(),
+        ),
+        (
+            "laws/a.json".to_string(),
+            "cb1ad2119d8fafb69566510ee712661f9f14b83385006ef92aec47f523a38358".to_string(),
+        ),
+    ];
+    let gh = compute_global_hash(entries.iter().map(|(p, h)| (p.as_str(), h.as_str())));
+    assert_eq!(
+        gh, "c6514bdbb46e64fca24b08bc4d3545c0b7498036452ccb7b489b270ec7fc5571",
+        "Rust client global_hash diverged from the Python publisher recipe (deploy/04 4.2.2); \
+         re-run scripts/kb/gen_kb_manifest.py and reconcile compute_global_hash."
+    );
+}

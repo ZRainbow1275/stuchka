@@ -1,0 +1,28 @@
+{
+  "dataset": "fact-30",
+  "spec": "0529/spec/ai/05-evaluation-set.md §5.5",
+  "gate_type": "human_process",
+  "threshold_human": "事实核验率 >= 80% (5 内部审阅人, >= 1 of 2 marks 基本正确)",
+  "note": "HUMAN PROCESS GATE. Expected facts are GENUINE ground truth a reviewer checks M1 output against; they are NOT auto-scored. The full 30-case set is the §5.9 human process; this is the seed (schema + genuine examples).",
+  "cases": [
+    {
+      "id": "F001_illegal_dismiss_GD",
+      "case_seed": "case_fixture/01_illegal_dismiss_GD.json",
+      "expected_facts": [
+        {"fact_id": "F001-001", "kind": "EmploymentStart", "expected_date": "2016-03-01", "evidence_refs": ["EV-001"]},
+        {"fact_id": "F001-002", "kind": "EmploymentEnd", "expected_date": "2024-03-01", "evidence_refs": ["EV-002"]},
+        {"fact_id": "F001-003", "kind": "MonthlyWage", "expected_value": "8000", "unit": "cny_per_month", "evidence_refs": ["EV-003"]}
+      ],
+      "review_protocol": {"reviewers_per_case": 2, "agreement_threshold": ">=1 of 2 marks 基本正确"}
+    },
+    {
+      "id": "F002_overtime_GD",
+      "case_seed": "case_fixture/02_overtime_GD.json",
+      "expected_facts": [
+        {"fact_id": "F002-001", "kind": "MonthlyWage", "expected_value": "8700", "unit": "cny_per_month", "evidence_refs": ["EV-001"]},
+        {"fact_id": "F002-002", "kind": "WeekdayOvertimeHours", "expected_value": "10", "unit": "hours_per_month", "evidence_refs": ["EV-004"]}
+      ],
+      "review_protocol": {"reviewers_per_case": 2, "agreement_threshold": ">=1 of 2 marks 基本正确"}
+    }
+  ]
+}

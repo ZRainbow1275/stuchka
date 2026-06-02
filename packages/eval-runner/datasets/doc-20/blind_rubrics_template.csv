@@ -1,0 +1,7 @@
+doc_id,template_id,scenario_id,lawyer_id,directly_submittable_1to5,law_correctness_yes_no_partial,fact_chain_yes_no_partial,claim_list_complete_yes_no,evidence_list_yes_no,format_layout_yes_no,gb45438_marker_present_yes_no,notes
+D001_arbitration_migrant_wage_GD,arbitration_application,migrant_wage_arrears,,,,,,,,,
+D002_mediation_migrant_wage_GD,mediation_application,migrant_wage_arrears,,,,,,,,,
+D003_arbitration_illegal_dismiss_GD,arbitration_application,illegal_dismissal_compensation,,,,,,,,,
+D004_lawsuit_illegal_dismiss_GD,lawsuit_first_instance,illegal_dismissal_compensation,,,,,,,,,
+D005_inspection_work_injury_GD,inspection_complaint,work_injury_benefit,,,,,,,,,
+D006_settlement_work_injury_GD,settlement_agreement,work_injury_benefit,,,,,,,,,

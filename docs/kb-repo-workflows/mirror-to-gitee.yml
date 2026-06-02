@@ -1,0 +1,28 @@
+# stuchka-kb/.github/workflows/mirror-to-gitee.yml  (deploy/04 4.6.2)
+# Belongs to the SEPARATE github.com/stuchka/stuchka-kb repository -- see README.md in this dir.
+# GITEE_TOKEN is the documented credential seam (held as a stuchka-kb repo secret).
+name: Mirror to Gitee
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 19 * * *'  # 03:00 UTC+8 daily
+
+jobs:
+  mirror:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_USER: stuchka
+        run: |
+          git config user.email "ci@stuchka.cn"
+          git config user.name "Stuchka CI"
+          git remote add gitee "https://${GITEE_USER}:${GITEE_TOKEN}@gitee.com/stuchka/stuchka-kb.git"
+          git push gitee main --force
+          git push gitee --tags
