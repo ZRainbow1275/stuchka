@@ -47,6 +47,12 @@ dependencies:
   shared_preferences: ^2.5.3
   webview_windows: ^0.4.0
 
+  # M8 证据导入：真实桌面文件选择器（Windows 原生 file_selector_windows）—— 取代占位文件
+  file_selector: ^1.0.3
+
+  # M8 现场照片 EXIF / GPS 提取（纯 Dart，无原生）—— SceneCard 真实拍摄时间 / 坐标
+  exif: ^3.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
