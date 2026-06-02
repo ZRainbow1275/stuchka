@@ -45,6 +45,7 @@ dependencies:
 
   # 本地偏好（theme_mode / text_scale_factor / case_pane_ratio / 向导完成 / 上云记忆）
   shared_preferences: ^2.5.3
+  webview_windows: ^0.4.0
 
 dev_dependencies:
   flutter_test:

@@ -477,6 +477,36 @@ class AuditEntryDto {
       );
 }
 
+/// `POST /document/:id/export` response (mirrors backend `ExportDocResp`): the produced 三件套 zip
+/// path + the bundle entries actually written + the GB 45438 four-layer completeness self-check.
+class ExportDocRespDto {
+  ExportDocRespDto({
+    required this.dossierZipPath,
+    required this.entries,
+    required this.pdfPresent,
+    required this.aiGeneratedSegments,
+  });
+
+  /// Absolute path of the produced dossier zip on disk.
+  final String dossierZipPath;
+
+  /// The bundle entries actually present (`*.md`, `manifest.json`, and `*.pdf` when produced).
+  final List<String> entries;
+
+  /// Whether the final PDF was produced in this environment.
+  final bool pdfPresent;
+
+  /// The Layer-4 manifest's `ai_generated_segments` count (GB-02 tamper-evidence anchor).
+  final int aiGeneratedSegments;
+
+  factory ExportDocRespDto.fromJson(Map<String, dynamic> j) => ExportDocRespDto(
+        dossierZipPath: (j['dossierZipPath'] ?? '') as String,
+        entries: ((j['entries'] as List?) ?? const []).map((e) => e as String).toList(),
+        pdfPresent: (j['pdfPresent'] ?? false) as bool,
+        aiGeneratedSegments: (j['aiGeneratedSegments'] as num?)?.toInt() ?? 0,
+      );
+}
+
 // --- shared parse helpers ---
 
 double? _d(Object? v) => v == null ? null : (v as num).toDouble();

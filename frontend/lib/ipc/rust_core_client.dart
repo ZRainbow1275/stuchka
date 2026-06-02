@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../features/accessibility/high_risk/countdown_button.dart';
 import 'dto/diagnose_dto.dart';
 import 'dto/dtos.dart';
+import 'dto/editor_dto.dart';
 import 'rust_core_handshake.dart';
 
 /// Maps a backend `ApiError.code` / transport failure onto a typed Dart exception (backend/01
@@ -165,6 +166,53 @@ class RustCoreClient {
   Future<Map<String, dynamic>> deadlineRun(Map<String, dynamic> req) async {
     final res = await _dio.post<Map<String, dynamic>>('/deadline/run', data: req);
     return _unwrap(res, (d) => (d as Map).cast<String, dynamic>());
+  }
+
+  // --- document ---
+
+  /// `POST /case/:id/document` — create a Yjs document for the case and return its id. Used by the
+  /// editor host to obtain a `docId` before mounting the WebView (FE02 §2.4).
+  Future<String> createDocument(String caseId, {String templateId = 'arb_application'}) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/case/$caseId/document',
+      data: {'templateId': templateId, 'claimIds': const <String>[]},
+    );
+    return _unwrap(res, (d) => (d as Map)['docId'] as String);
+  }
+
+  // --- editor steps (A->B relay, FE02 §2.11) ---
+
+  /// `POST /document/:id/steps` — persist a batch of ProseMirror editor steps relayed from the
+  /// WebView editor (Channel A) into the main-store `doc_step` table + the independent audit.sqlite
+  /// (INV-06 double-write). Each step carries its `why` (edit | ai_accept | merge_resolve). Returns
+  /// the [StepAckDto] (per-step step_no + audit seq).
+  Future<StepAckDto> pushDocumentSteps(String docId, EditorStepBatch batch) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/document/$docId/steps',
+      data: batch.toJson(),
+    );
+    return _unwrap(res, (d) => StepAckDto.fromJson(d as Map<String, dynamic>));
+  }
+
+  /// `POST /document/:id/export` — produce the real GB 45438 三件套 dossier zip (all four layers,
+  /// INV-02) + the D3 Export audit. Used by the S-05 刑事报案材料导出 high-risk site so the export is
+  /// a genuine artefact, never a fabricated success message. Returns the [ExportDocRespDto] (zip path
+  /// + entries + completeness); throws on any backend error so the caller surfaces the failure.
+  Future<ExportDocRespDto> exportDocument(
+    String docId, {
+    List<String> formats = const ['pdf', 'md', 'json'],
+    bool embedWaterMark = true,
+    int gb45438Level = 4,
+  }) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/document/$docId/export',
+      data: {
+        'formats': formats,
+        'embedWaterMark': embedWaterMark,
+        'gb45438Level': gb45438Level,
+      },
+    );
+    return _unwrap(res, (d) => ExportDocRespDto.fromJson(d as Map<String, dynamic>));
   }
 
   // --- kb ---
