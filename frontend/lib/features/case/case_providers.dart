@@ -22,6 +22,13 @@ final kbVersionProvider = FutureProvider<KbVersionDto>((ref) async {
   return client.kbVersion();
 });
 
+/// `GET /case/:id/warnings` — the M12 proactive-warning feed for the case.
+final caseWarningsProvider =
+    FutureProvider.family<WarningFeedDto, String>((ref, id) async {
+  final client = ref.watch(rustCoreClientProvider);
+  return client.caseWarnings(id);
+});
+
 /// The current "active" case (the most-recently-updated case, used by the simple home).
 final activeCaseProvider = Provider<CaseDto?>((ref) {
   final list = ref.watch(caseListProvider).value;

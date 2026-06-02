@@ -215,6 +215,16 @@ class RustCoreClient {
     return _unwrap(res, (d) => ExportDocRespDto.fromJson(d as Map<String, dynamic>));
   }
 
+  // --- warnings (M12 风险预警) ---
+
+  /// `GET /case/:id/warnings` — the proactive-warning feed (deadline 10/3/1-day tiers +
+  /// regulation-change + the evidence-loss honest seam). Every deadline warning is derived from the
+  /// real M5 engine over the case's persisted `case_occurred_at` (no fabricated tiers).
+  Future<WarningFeedDto> caseWarnings(String caseId) async {
+    final res = await _dio.get<Map<String, dynamic>>('/case/$caseId/warnings');
+    return _unwrap(res, (d) => WarningFeedDto.fromJson(d as Map<String, dynamic>));
+  }
+
   // --- kb ---
 
   Future<KbVersionDto> kbVersion() async {

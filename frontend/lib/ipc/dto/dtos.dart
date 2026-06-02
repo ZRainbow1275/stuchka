@@ -507,6 +507,78 @@ class ExportDocRespDto {
       );
 }
 
+/// `GET /case/:id/warnings` response (M12 风险预警). Mirrors backend `WarningFeedResp`.
+class WarningFeedDto {
+  WarningFeedDto({required this.caseId, required this.items, required this.evidenceLossSeam});
+
+  final String caseId;
+  final List<WarningItemDto> items;
+  final EvidenceLossSeamDto evidenceLossSeam;
+
+  factory WarningFeedDto.fromJson(Map<String, dynamic> j) => WarningFeedDto(
+        caseId: (j['caseId'] ?? '') as String,
+        items: ((j['items'] as List?) ?? const [])
+            .map((e) => WarningItemDto.fromJson((e as Map).cast<String, dynamic>()))
+            .toList(),
+        evidenceLossSeam: EvidenceLossSeamDto.fromJson(
+          (j['evidenceLossSeam'] as Map?)?.cast<String, dynamic>() ?? const {},
+        ),
+      );
+}
+
+/// One proactive-warning item (deadline / regulation_change).
+class WarningItemDto {
+  WarningItemDto({
+    required this.warningClass,
+    required this.kind,
+    required this.tier,
+    required this.tierLabel,
+    required this.bufferedRemainingDays,
+    required this.rawRemainingDays,
+    required this.manualConfirmRequired,
+    required this.lawRefs,
+  });
+
+  /// `deadline` | `regulation_change`.
+  final String warningClass;
+  final String kind;
+
+  /// `t10_days` | `t3_days` | `t1_day`.
+  final String tier;
+  final String tierLabel;
+  final int bufferedRemainingDays;
+  final int rawRemainingDays;
+  final bool manualConfirmRequired;
+  final List<String> lawRefs;
+
+  factory WarningItemDto.fromJson(Map<String, dynamic> j) => WarningItemDto(
+        warningClass: (j['class'] ?? '') as String,
+        kind: (j['kind'] ?? '') as String,
+        tier: (j['tier'] ?? '') as String,
+        tierLabel: (j['tierLabel'] ?? '') as String,
+        bufferedRemainingDays: (j['bufferedRemainingDays'] as num?)?.toInt() ?? 0,
+        rawRemainingDays: (j['rawRemainingDays'] as num?)?.toInt() ?? 0,
+        manualConfirmRequired: (j['manualConfirmRequired'] ?? true) as bool,
+        lawRefs: ((j['lawRefs'] as List?) ?? const []).map((e) => e as String).toList(),
+      );
+}
+
+/// The evidence-loss honest seam surfaced by the warning feed (declares the R1 data gap).
+class EvidenceLossSeamDto {
+  EvidenceLossSeamDto({required this.available, required this.reason, required this.requiredFields});
+
+  final bool available;
+  final String reason;
+  final List<String> requiredFields;
+
+  factory EvidenceLossSeamDto.fromJson(Map<String, dynamic> j) => EvidenceLossSeamDto(
+        available: (j['available'] ?? false) as bool,
+        reason: (j['reason'] ?? '') as String,
+        requiredFields:
+            ((j['requiredFields'] as List?) ?? const []).map((e) => e as String).toList(),
+      );
+}
+
 // --- shared parse helpers ---
 
 double? _d(Object? v) => v == null ? null : (v as num).toDouble();
