@@ -20,6 +20,7 @@ pub mod kb;
 pub mod law_ref;
 pub mod llm;
 pub mod sync;
+pub mod warning;
 
 use axum::Router;
 
@@ -39,6 +40,7 @@ pub fn all() -> Router<AppState> {
         .merge(llm::routes())
         .merge(compute::routes())
         .merge(deadline::routes())
+        .merge(warning::routes())
         .merge(kb::routes())
         .merge(health::routes())
 }
