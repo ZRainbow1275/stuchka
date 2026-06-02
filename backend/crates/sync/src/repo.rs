@@ -66,6 +66,9 @@ pub struct PeerRow {
     pub trusted: bool,
     /// Stored ed25519 public key (base58) once paired.
     pub pubkey: Option<String>,
+    /// Last mDNS sighting (RFC3339 in the column); `None` for a peer paired but never seen on the
+    /// network. Surfaced truthfully to `GET /sync/peers` — never fabricated.
+    pub last_seen: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// Yjs document state persistence (03-sync-yjs §3.3.2).
@@ -494,7 +497,8 @@ impl PeerRepo for SqlitePeerRepo {
 
     async fn list(&self) -> SyncResult<Vec<PeerRow>> {
         let rows = sqlx::query(
-            "SELECT peer_id, hostname, last_ip, last_port, trusted, pubkey FROM peer ORDER BY peer_id",
+            "SELECT peer_id, hostname, last_ip, last_port, trusted, pubkey, last_seen \
+             FROM peer ORDER BY peer_id",
         )
         .fetch_all(&self.pool)
         .await?;
@@ -507,6 +511,10 @@ impl PeerRepo for SqlitePeerRepo {
                 port: r.get::<i64, _>("last_port") as u16,
                 trusted: r.get::<i64, _>("trusted") == 1,
                 pubkey: r.get("pubkey"),
+                last_seen: r
+                    .get::<Option<String>, _>("last_seen")
+                    .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s).ok())
+                    .map(|dt| dt.with_timezone(&chrono::Utc)),
             })
             .collect())
     }
@@ -593,5 +601,7 @@ mod tests {
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].port, 4001);
         assert!(list[0].trusted);
+        // last_seen is the real mDNS sighting recorded by upsert_seen (never fabricated).
+        assert!(list[0].last_seen.is_some(), "upsert_seen records a real last_seen");
     }
 }
