@@ -423,6 +423,38 @@ class KbVersionDto {
       );
 }
 
+/// `POST /kb/refresh` response (routes/kb.rs::KbRefreshDto). R1: re-validates the active manifest
+/// and reports the REAL freshness level + whole-day age; `changed` is the honest "did a network
+/// pull replace the active version" flag (false until the R1b network fetch path lands).
+class KbRefreshDto {
+  KbRefreshDto({
+    required this.versionHash,
+    required this.versionLabel,
+    required this.ageDays,
+    required this.freshness,
+    required this.changed,
+  });
+
+  final String versionHash;
+  final String versionLabel;
+  final int ageDays;
+
+  /// `fresh` | `stale` | `expired` (Level-4 at >= 30 days blocks compensation, INV-04).
+  final String freshness;
+  final bool changed;
+
+  bool get isExpired => freshness == 'expired';
+  bool get isStale => freshness == 'stale';
+
+  factory KbRefreshDto.fromJson(Map<String, dynamic> j) => KbRefreshDto(
+        versionHash: (j['versionHash'] ?? '') as String,
+        versionLabel: (j['versionLabel'] ?? '') as String,
+        ageDays: (j['ageDays'] as num?)?.toInt() ?? 0,
+        freshness: (j['freshness'] ?? 'fresh') as String,
+        changed: (j['changed'] ?? false) as bool,
+      );
+}
+
 /// HealthDto (routes/health.rs::HealthDto — `{status, version}`).
 class HealthDto {
   HealthDto({required this.status, required this.version});

@@ -13,6 +13,7 @@ import '../features/case/performance/performance_timeline_page.dart';
 import '../features/case/warning/warning_feed_panel.dart';
 import '../features/home/standard_home_page.dart';
 import '../features/home/simple_home_page.dart';
+import '../features/kb/kb_management_page.dart';
 import '../features/intake/identity_select_page.dart';
 import '../features/intake/diagnose_page.dart';
 import '../features/onboarding/onboarding_page.dart';
@@ -70,6 +71,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/intake/identity',
         builder: (context, state) => const IdentitySelectPage(),
+      ),
+      // M6 知识库管理 (R1.5).
+      GoRoute(
+        path: '/kb',
+        builder: (context, state) => const KbManagementPage(),
       ),
       // 农民工欠薪 主用户路径 shell (spec frontend/04 §4.9). Hosts the pinned ScenarioProgressBar.
       GoRoute(

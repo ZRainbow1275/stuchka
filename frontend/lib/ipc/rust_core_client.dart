@@ -241,6 +241,15 @@ class RustCoreClient {
     return _unwrap(res, (d) => KbVersionDto.fromJson(d as Map<String, dynamic>));
   }
 
+  /// `POST /kb/refresh` (M6) — re-validate the active KB manifest and report the REAL freshness
+  /// level + whole-day age. R1 does not hit the network (`changed` is honestly false); the actual
+  /// pull (GitHub Pages -> jsDelivr -> mirror) is the R1b fetch path. Throws on a manifest that
+  /// fails its KBC-02/03 self-check.
+  Future<KbRefreshDto> kbRefresh() async {
+    final res = await _dio.post<Map<String, dynamic>>('/kb/refresh');
+    return _unwrap(res, (d) => KbRefreshDto.fromJson(d as Map<String, dynamic>));
+  }
+
   // --- audit ---
 
   /// `POST /audit/ack` — persist an INV-10 high-risk disclaimer acknowledgement into the

@@ -29,6 +29,11 @@ class StandardHomePage extends ConsumerWidget {
             onPressed: () => context.go('/scenario/migrant-wage/identity'),
           ),
           IconButton(
+            tooltip: '知识库管理',
+            icon: const Icon(StuchkaIcons.sourceKb),
+            onPressed: () => context.go('/kb'),
+          ),
+          IconButton(
             tooltip: '字号 +',
             icon: const Icon(StuchkaIcons.zoomIn),
             onPressed: () =>
