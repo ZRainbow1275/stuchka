@@ -90,11 +90,11 @@ impl GazetteerNer {
 
         let mut org_suffixes: Vec<Vec<char>> =
             parse_lines(org_raw).map(|l| l.chars().collect()).collect();
-        org_suffixes.sort_by(|a, b| b.len().cmp(&a.len()));
+        org_suffixes.sort_by_key(|v| std::cmp::Reverse(v.len()));
 
         let mut medical_keywords: Vec<Vec<char>> =
             parse_lines(med_raw).map(|l| l.chars().collect()).collect();
-        medical_keywords.sort_by(|a, b| b.len().cmp(&a.len()));
+        medical_keywords.sort_by_key(|v| std::cmp::Reverse(v.len()));
 
         // Common surname-initial words that are NOT names (genuine FP control; the negative-control
         // unit tests assert these are NOT emitted as PersonName).
