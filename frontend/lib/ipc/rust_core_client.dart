@@ -168,6 +168,15 @@ class RustCoreClient {
     return _unwrap(res, (d) => (d as Map).cast<String, dynamic>());
   }
 
+  /// `POST /performance/evaluate` (M16 履行监控) — feed a real payment schedule to the rule engine
+  /// and get back the per-installment state timeline + the breach-triggered §250 enforcement
+  /// countdown (10% buffer + INV-08). Every value is the engine's own output; the form never
+  /// fabricates a state or a window. Throws on E_KB_OUTDATED / E_RULE_NO_COVERAGE / bad-request.
+  Future<PerformanceStatusDto> evaluatePerformance(PerformanceEvalReq req) async {
+    final res = await _dio.post<Map<String, dynamic>>('/performance/evaluate', data: req.toJson());
+    return _unwrap(res, (d) => PerformanceStatusDto.fromJson(d as Map<String, dynamic>));
+  }
+
   // --- document ---
 
   /// `POST /case/:id/document` — create a Yjs document for the case and return its id. Used by the

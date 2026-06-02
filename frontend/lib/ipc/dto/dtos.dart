@@ -579,7 +579,223 @@ class EvidenceLossSeamDto {
       );
 }
 
+/// `POST /performance/evaluate` request (M16 履行监控). Mirrors backend `PerformanceReq` (the
+/// outer struct is camelCase; the `installments` items deserialize into `rule_engine::
+/// PerformanceInstallment`, whose fields are snake_case). Amounts are sent as decimal strings so no
+/// f64 ever touches a monetary value (OM-05) on the wire.
+class PerformanceEvalReq {
+  PerformanceEvalReq({
+    required this.caseId,
+    required this.province,
+    required this.city,
+    required this.instrumentKind,
+    required this.effectiveDate,
+    required this.installments,
+    this.asOf,
+  });
+
+  final String caseId;
+  final String province;
+  final String city;
+
+  /// `award` | `judgment` | `settlement` (snake_case wire value).
+  final String instrumentKind;
+
+  /// yyyy-MM-dd.
+  final String effectiveDate;
+  final List<PerformanceInstallmentReq> installments;
+
+  /// yyyy-MM-dd; null → backend defaults to today.
+  final String? asOf;
+
+  Map<String, dynamic> toJson() => {
+        'caseId': caseId,
+        'province': province,
+        'city': city,
+        'instrumentKind': instrumentKind,
+        'effectiveDate': effectiveDate,
+        'installments': installments.map((e) => e.toJson()).toList(),
+        if (asOf != null) 'asOf': asOf,
+      };
+}
+
+/// One scheduled payment node in the request (mirrors `rule_engine::PerformanceInstallment`;
+/// snake_case fields). Amounts are decimal strings.
+class PerformanceInstallmentReq {
+  PerformanceInstallmentReq({
+    required this.dueOn,
+    required this.amount,
+    this.paidOn,
+    this.paidAmount,
+  });
+
+  final String dueOn; // yyyy-MM-dd
+  final String amount; // decimal string
+  final String? paidOn; // yyyy-MM-dd
+  final String? paidAmount; // decimal string
+
+  Map<String, dynamic> toJson() => {
+        'due_on': dueOn,
+        'amount': amount,
+        if (paidOn != null) 'paid_on': paidOn,
+        if (paidAmount != null) 'paid_amount': paidAmount,
+      };
+}
+
+/// `POST /performance/evaluate` response. Mirrors backend `rule_engine::PerformanceStatus`
+/// (camelCase). Monetary totals are kept as their exact decimal strings (no f64 rounding). The
+/// breach-triggered enforcement countdown is the REAL §250 engine outcome (or null when no breach).
+class PerformanceStatusDto {
+  PerformanceStatusDto({
+    required this.installments,
+    required this.totalAmount,
+    required this.totalPaid,
+    required this.totalShortfall,
+    this.firstBreachAt,
+    this.enforcement,
+  });
+
+  final List<InstallmentAssessmentDto> installments;
+  final String totalAmount;
+  final String totalPaid;
+  final String totalShortfall;
+  final String? firstBreachAt; // yyyy-MM-dd
+  final DeadlineOutcomeDto? enforcement;
+
+  bool get hasBreach => firstBreachAt != null;
+
+  factory PerformanceStatusDto.fromJson(Map<String, dynamic> j) => PerformanceStatusDto(
+        installments: ((j['installments'] as List?) ?? const [])
+            .map((e) => InstallmentAssessmentDto.fromJson((e as Map).cast<String, dynamic>()))
+            .toList(),
+        totalAmount: _decStr(j['totalAmount']),
+        totalPaid: _decStr(j['totalPaid']),
+        totalShortfall: _decStr(j['totalShortfall']),
+        firstBreachAt: j['firstBreachAt'] as String?,
+        enforcement: (j['enforcement'] is Map)
+            ? DeadlineOutcomeDto.fromOutcomeJson((j['enforcement'] as Map).cast<String, dynamic>())
+            : null,
+      );
+}
+
+/// One assessed installment (mirrors `rule_engine::InstallmentAssessment`, camelCase). `state` is
+/// the internally-tagged `InstallmentState` (`{ state: ..., ... }`).
+class InstallmentAssessmentDto {
+  InstallmentAssessmentDto({
+    required this.dueOn,
+    required this.amount,
+    this.paidOn,
+    this.paidAmount,
+    required this.state,
+    this.daysLate,
+    this.overdueDays,
+    this.shortfall,
+  });
+
+  final String dueOn;
+  final String amount;
+  final String? paidOn;
+  final String? paidAmount;
+
+  /// `not_yet_due` | `paid_on_time` | `paid_late` | `overdue`.
+  final String state;
+  final int? daysLate; // paid_late
+  final int? overdueDays; // overdue
+  final String? shortfall; // overdue (decimal string)
+
+  bool get isBreach => state == 'overdue';
+
+  factory InstallmentAssessmentDto.fromJson(Map<String, dynamic> j) {
+    final st = (j['state'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return InstallmentAssessmentDto(
+      dueOn: (j['dueOn'] ?? '') as String,
+      amount: _decStr(j['amount']),
+      paidOn: j['paidOn'] as String?,
+      paidAmount: j['paidAmount'] == null ? null : _decStr(j['paidAmount']),
+      state: (st['state'] ?? '') as String,
+      daysLate: (st['days_late'] as num?)?.toInt(),
+      overdueDays: (st['overdue_days'] as num?)?.toInt(),
+      shortfall: st['shortfall'] == null ? null : _decStr(st['shortfall']),
+    );
+  }
+}
+
+/// A flattened view of a deadline `RuleOutcome` (rule-engine `coverage.rs`, serde tag `status`).
+/// Carries only what a countdown surface needs. `status == 'ok'` with a `Deadline` value yields the
+/// 10% buffered window + INV-08 manual-confirm flag; otherwise the outcome is out-of-scope.
+class DeadlineOutcomeDto {
+  DeadlineOutcomeDto({
+    required this.status,
+    this.kind,
+    this.rawRemainingDays = 0,
+    this.bufferedRemainingDays = 0,
+    this.stateKind = '',
+    this.overdueDays,
+    this.remainingDays,
+    this.manualConfirmRequired = true,
+    this.lawRefs = const [],
+    this.reasons = const [],
+  });
+
+  /// `ok` | `out_of_scope`.
+  final String status;
+  final String? kind; // e.g. enforcement
+  final int rawRemainingDays;
+  final int bufferedRemainingDays;
+  final String stateKind; // running | suspended | expired
+  final int? overdueDays; // expired
+  final int? remainingDays; // running / suspended
+  final bool manualConfirmRequired;
+  final List<String> lawRefs;
+  final List<String> reasons; // out_of_scope
+
+  bool get isOk => status == 'ok';
+  bool get isExpired => stateKind == 'expired';
+
+  factory DeadlineOutcomeDto.fromOutcomeJson(Map<String, dynamic> j) {
+    final status = (j['status'] ?? '') as String;
+    if (status != 'ok') {
+      return DeadlineOutcomeDto(
+        status: status,
+        manualConfirmRequired: true,
+        reasons: ((j['reasons'] as List?) ?? const []).map((e) => '$e').toList(),
+      );
+    }
+    final value = (j['value'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final dv = (value['Deadline'] as Map?)?.cast<String, dynamic>();
+    if (dv == null) {
+      // An `ok` outcome that is not a deadline (e.g. Money) — surface as out-of-scope for a
+      // countdown surface rather than fabricating a window.
+      return DeadlineOutcomeDto(status: 'out_of_scope');
+    }
+    final state = (dv['state'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return DeadlineOutcomeDto(
+      status: 'ok',
+      kind: dv['kind'] as String?,
+      rawRemainingDays: (dv['raw_remaining_days'] as num?)?.toInt() ?? 0,
+      bufferedRemainingDays: (dv['buffered_remaining_days'] as num?)?.toInt() ?? 0,
+      stateKind: (state['state'] ?? '') as String,
+      overdueDays: (state['overdue_days'] as num?)?.toInt(),
+      remainingDays: (state['remaining_days'] ?? state['frozen_remaining_days']) is num
+          ? ((state['remaining_days'] ?? state['frozen_remaining_days']) as num).toInt()
+          : null,
+      manualConfirmRequired: (dv['manual_confirm_required'] ?? true) as bool,
+      lawRefs: ((dv['law_refs'] as List?) ?? const [])
+          .map((e) => ((e as Map)['urn'] ?? '').toString())
+          .toList(),
+    );
+  }
+}
+
 // --- shared parse helpers ---
+
+/// The exact decimal string of a monetary value (rust_decimal serializes as a string by default;
+/// a numeric is also tolerated). Never converts through f64 — preserves money precision (OM-05).
+String _decStr(Object? v) {
+  if (v == null) return '0';
+  if (v is String) return v;
+  return '$v';
+}
 
 double? _d(Object? v) => v == null ? null : (v as num).toDouble();
 

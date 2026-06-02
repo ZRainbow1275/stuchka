@@ -102,6 +102,16 @@ class _CaseWorkbenchPageState extends ConsumerState<CaseWorkbenchPage> {
             onPressed: () => context.go('/case/${widget.caseId}/documents'),
           ),
           IconButton(
+            tooltip: '风险预警',
+            icon: const Icon(StuchkaIcons.alert),
+            onPressed: () => context.go('/case/${widget.caseId}/warnings'),
+          ),
+          IconButton(
+            tooltip: '履行 / 执行监控',
+            icon: const Icon(StuchkaIcons.deadline),
+            onPressed: () => context.go('/case/${widget.caseId}/performance'),
+          ),
+          IconButton(
             tooltip: '审计',
             icon: const Icon(StuchkaIcons.audit),
             onPressed: () => context.go('/case/${widget.caseId}/audit'),

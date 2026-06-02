@@ -9,6 +9,7 @@ import '../features/case/evidence/evidence_collector_page.dart';
 import '../features/case/flow/procedure_compare_page.dart';
 import '../features/case/flow/scenario_shell_page.dart';
 import '../features/case/document/document_host_page.dart';
+import '../features/case/performance/performance_timeline_page.dart';
 import '../features/case/warning/warning_feed_panel.dart';
 import '../features/home/standard_home_page.dart';
 import '../features/home/simple_home_page.dart';
@@ -127,6 +128,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'warnings',
             builder: (context, state) =>
                 CaseWarningsPage(caseId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: 'performance',
+            builder: (context, state) =>
+                PerformanceTimelinePage(caseId: state.pathParameters['id']!),
           ),
         ],
       ),
