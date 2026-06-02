@@ -1,0 +1,35 @@
+{
+  "id": "tpl_enforcement_v1",
+  "template_id": "enforcement",
+  "title": "强制执行申请书",
+  "version": "1.0.0",
+  "applicable_subtypes": ["WAGE_ARREARS", "ILLEGAL_TERMINATION"],
+  "applicable_regions": ["GD", "BJ", "SH", "JS", "ZJ"],
+  "slots": [
+    { "key": "applicant.name", "required": true, "validator": "non_empty" },
+    { "key": "applicant.id_no", "required": true, "validator": "id_card" },
+    { "key": "respondent.name", "required": true, "validator": "non_empty" },
+    { "key": "respondent.unified_code", "required": false, "validator": "uscc" },
+    { "key": "claims", "required": true, "validator": "non_empty_list" },
+    { "key": "facts", "required": true, "validator": "non_empty_list" },
+    { "key": "evidence_index", "required": true, "validator": "non_empty_list" },
+    { "key": "law_refs", "required": true, "validator": "non_empty_list" }
+  ],
+  "body_blocks": [
+    { "type": "heading", "level": 1, "text": "强制执行申请书" },
+    { "type": "paragraph", "slot": "applicant.block" },
+    { "type": "paragraph", "slot": "respondent.block" },
+    { "type": "heading", "level": 3, "text": "执行请求" },
+    { "type": "orderedList", "slot": "claims" },
+    { "type": "heading", "level": 3, "text": "执行依据与事实" },
+    { "type": "paragraph", "slot": "facts" },
+    { "type": "heading", "level": 3, "text": "法律依据" },
+    { "type": "blockquote", "slot": "law_refs" },
+    { "type": "paragraph", "slot": "evidence_index" }
+  ],
+  "gb45438_request": {
+    "header": "本文书由 Stučka 辅助生成，最终内容由当事人审定（GB/T 45438-2025）",
+    "request_backend_watermark": true,
+    "ai_segment_tracking": true
+  }
+}

@@ -1,0 +1,26 @@
+{{ title }}
+
+投诉人：{{ applicant }}
+被投诉用人单位：{{ respondent }}
+受理机关：{{ jurisdiction }}（{{ province }}{{ city }}劳动保障监察机构）
+
+投诉事项：
+{% for c in claims %}{{ c.index }}. {{ c.description }}{% if c.amount %}（涉及金额：人民币 {{ c.amount }} 元）{% endif %}
+{% endfor %}
+违法事实：
+{% for f in facts %}[fact:{{ f.fact_id }}] {{ f.statement }}
+{% endfor %}
+法律依据：
+{% for lr in law_refs %}- {{ lr.title }}（{{ lr.urn }}）
+{% endfor %}
+AI 辅助分析意见：
+{% for p in ai_paragraphs %}{{ p.text }}
+{% endfor %}
+证据材料：
+{% for e in evidence_index %}- {{ e }}
+{% endfor %}
+此致
+{{ jurisdiction }}
+
+投诉人（签名）：________________
+日期：________________

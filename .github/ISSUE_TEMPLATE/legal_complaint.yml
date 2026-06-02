@@ -1,0 +1,53 @@
+name: 投诉 / 合规反馈 (Legal complaint / compliance)
+description: 独立的投诉与合规反馈通道（侵权、合规问题、主体登记、法律意见书等）。与个案咨询无关。
+title: "[compliance] "
+labels: ["compliance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 关于本通道
+        这是一个**独立的投诉 / 合规反馈通道**，用于：
+        - 侵权投诉（版权、商标、名誉等）；
+        - 合规问题反馈（GB 45438 标识、出境守卫、免责文案、备案豁免等）；
+        - 项目主体登记 / 律所法律意见书相关质询；
+        - 数据删除请求。
+
+        **本通道不处理个案法律咨询。** 如需个案辅助意见，请使用本系统"问诊"功能；
+        如需人工法律意见，请拨打 12348 / 12351。
+
+        为保护隐私，请尽量避免在此公开个人敏感信息；如确需提供，请使用下方加密 / 邮件渠道。
+  - type: dropdown
+    id: category
+    attributes:
+      label: 投诉 / 反馈类别
+      options:
+        - 侵权投诉（版权 / 商标 / 名誉）
+        - 合规问题（GB 45438 / 出境守卫 / 免责文案 / 备案）
+        - 主体登记 / 律所意见书质询
+        - 数据删除请求
+        - 其他合规事项
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 投诉 / 反馈内容
+      description: 请清晰描述事项、涉及的版本或文件、以及你的诉求。
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: 联系方式（可选）
+      description: 如需项目方主体回复，请留下可联系的邮箱（将仅用于本次投诉处理）。
+      placeholder: 例如 you@example.com
+    validations:
+      required: false
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: 确认
+      options:
+        - label: 我理解本通道用于投诉与合规反馈，不用于个案法律咨询。
+          required: true

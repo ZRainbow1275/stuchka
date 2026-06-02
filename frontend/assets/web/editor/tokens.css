@@ -1,0 +1,384 @@
+/* ============================================================
+   Stučka · Design Tokens
+   工人阶级法律工作台 — 庄重 / 组织化 / 行动导向
+   遵循 prompts/0512-decision-pack/10-visual-brand.md
+   ============================================================ */
+
+:root {
+  /* ---------- 中性色阶 ---------- */
+  --ink-0:    #fafaf7;   /* 纸白（背景） */
+  --ink-50:   #f1efe8;   /* 浅纸 */
+  --ink-100:  #e3e0d4;   /* 分隔 */
+  --ink-200:  #c7c2b0;   /* 弱前景 */
+  --ink-400:  #847d6a;   /* 次正文 */
+  --ink-600:  #4a4536;   /* 主正文 */
+  --ink-800:  #25221a;   /* 强调 */
+  --ink-900:  #14130d;   /* 最强 */
+
+  /* ---------- 主色 · 印章红（庄重克制） ---------- */
+  --seal-50:  #fbe9e7;
+  --seal-300: #c14a40;
+  --seal-500: #9d2f24;    /* 主操作 */
+  --seal-700: #6f1a13;
+  --seal-900: #3e0c08;
+
+  /* ---------- 辅色 · 墨蓝（来源/权威） ---------- */
+  --ink-blue-100: #d4dde4;
+  --ink-blue-500: #2b4763;
+  --ink-blue-700: #1a2d42;
+
+  /* ---------- 状态色（必须三重编码：色 + 图标 + 文本） ---------- */
+  --state-pending:  #b58a36;   /* 待办 · Clock */
+  --state-warn:     #c14a40;   /* 警示 · AlertTriangle */
+  --state-ok:       #4d6f3a;   /* 完成 · CheckCircle */
+  --state-info:     #2b4763;   /* 来源 · Database/Globe/Sigma */
+
+  /* ---------- 来源标签色（与四类来源协同） ---------- */
+  --source-rule:    #2b4763;   /* 规则 · Sigma */
+  --source-kb:      #4d6f3a;   /* 知识库 · Database */
+  --source-net:     #b58a36;   /* 联网 · Globe */
+  --source-infer:   #6f1a13;   /* 推断 · Sparkles */
+
+  /* ---------- 字号阶梯 ---------- */
+  --fs-h1: 28px;
+  --fs-h2: 22px;
+  --fs-h3: 18px;
+  --fs-body: 15px;
+  --fs-small: 13px;
+  --fs-tiny:  12px;
+
+  /* ---------- 行高 ---------- */
+  --lh-tight: 1.3;
+  --lh-base: 1.6;
+  --lh-loose: 1.8;
+
+  /* ---------- 间距 ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* ---------- 圆角（极克制，公文风） ---------- */
+  --r-0: 0;
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-3: 6px;
+
+  /* ---------- 阴影 ---------- */
+  --sh-1: 0 1px 0 rgba(20, 19, 13, 0.06);
+  --sh-2: 0 2px 6px rgba(20, 19, 13, 0.08);
+  --sh-3: 0 4px 12px rgba(20, 19, 13, 0.10);
+
+  /* ---------- 字体（思源系列 SIL OFL 开源打包） ---------- */
+  --ff-sans: "Source Han Sans CN", "Noto Sans CJK SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --ff-serif: "Source Han Serif CN", "Noto Serif CJK SC", "STSong", "SimSun", serif;
+  --ff-mono: "JetBrains Mono", "Source Han Sans Mono", Consolas, monospace;
+  --ff-doc-title: "FZXiaoBiaoSong-B05S", "STZhongsong", var(--ff-serif);
+  --ff-doc-body: "FangSong_GB2312", "STFangsong", var(--ff-serif);
+  --ff-doc-sign: "KaiTi_GB2312", "STKaiti", var(--ff-serif);
+
+  /* ---------- 情绪强度 token 维度 ---------- */
+  /* 用法：在页面根元素加 data-mood="encourage|professional|restrained|urgent" */
+}
+
+[data-mood="encourage"]   { --mood-fg: var(--seal-700);   --mood-bg: var(--seal-50);  }
+[data-mood="professional"]{ --mood-fg: var(--ink-800);    --mood-bg: var(--ink-0);    }
+[data-mood="restrained"]  { --mood-fg: var(--ink-600);    --mood-bg: var(--ink-50);   }
+[data-mood="urgent"]      { --mood-fg: var(--state-warn); --mood-bg: #fdf2f1;         }
+
+/* ============================================================
+   基线
+   ============================================================ */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--ff-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-base);
+  color: var(--ink-800);
+  background: var(--ink-0);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--ink-blue-500);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+a:hover { color: var(--seal-500); }
+
+h1, h2, h3 {
+  margin: 0 0 var(--sp-3);
+  line-height: var(--lh-tight);
+  font-weight: 700;
+}
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: 1px solid var(--ink-200);
+  background: var(--ink-0);
+  color: var(--ink-800);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-2);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+button:hover { background: var(--ink-50); border-color: var(--ink-400); }
+
+button.primary {
+  background: var(--seal-500);
+  color: var(--ink-0);
+  border-color: var(--seal-700);
+}
+button.primary:hover { background: var(--seal-700); }
+
+button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-600);
+}
+button.ghost:hover { background: var(--ink-50); }
+
+/* ============================================================
+   通用排版组件
+   ============================================================ */
+
+.shell {
+  display: grid;
+  grid-template-columns: 240px 1fr 320px;
+  grid-template-rows: 56px 1fr;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "sidebar main aside";
+  min-height: 100vh;
+}
+.topbar {
+  grid-area: topbar;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-5);
+  border-bottom: 1px solid var(--ink-100);
+  background: var(--ink-0);
+  gap: var(--sp-4);
+}
+.topbar .brand {
+  font-family: var(--ff-doc-title);
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  color: var(--seal-700);
+}
+.topbar .brand sub {
+  font-family: var(--ff-sans);
+  font-size: 11px;
+  color: var(--ink-400);
+  margin-left: var(--sp-2);
+  vertical-align: middle;
+}
+.topbar nav {
+  margin-left: var(--sp-6);
+  display: flex;
+  gap: var(--sp-4);
+}
+.topbar nav a {
+  border-bottom: none;
+  color: var(--ink-600);
+  font-size: var(--fs-small);
+}
+.topbar nav a.active { color: var(--seal-500); font-weight: 600; }
+
+.sidebar {
+  grid-area: sidebar;
+  border-right: 1px solid var(--ink-100);
+  padding: var(--sp-4) var(--sp-3);
+  overflow: auto;
+  background: var(--ink-50);
+}
+.sidebar h4 {
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin: var(--sp-4) 0 var(--sp-2);
+}
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sidebar li {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-2);
+  font-size: var(--fs-small);
+  color: var(--ink-600);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar li:hover { background: var(--ink-100); }
+.sidebar li.active { background: var(--ink-100); color: var(--ink-800); font-weight: 600; }
+.sidebar li .badge {
+  font-size: 10px;
+  background: var(--seal-500);
+  color: var(--ink-0);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.main {
+  grid-area: main;
+  padding: var(--sp-6);
+  overflow: auto;
+}
+
+.aside {
+  grid-area: aside;
+  border-left: 1px solid var(--ink-100);
+  padding: var(--sp-4);
+  background: var(--ink-50);
+  overflow: auto;
+}
+
+/* ============================================================
+   "先结论 / 再依据 / 最后展开" 三段结构
+   ============================================================ */
+.conclusion-card {
+  background: var(--ink-0);
+  border: 1px solid var(--ink-100);
+  border-left: 4px solid var(--seal-500);
+  padding: var(--sp-5);
+  border-radius: var(--r-2);
+  box-shadow: var(--sh-1);
+  margin-bottom: var(--sp-5);
+}
+.conclusion-card .label {
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: var(--sp-2);
+}
+.conclusion-card .headline {
+  font-family: var(--ff-doc-title);
+  font-size: var(--fs-h2);
+  color: var(--ink-900);
+  margin-bottom: var(--sp-3);
+}
+.conclusion-card .next-action {
+  margin-top: var(--sp-4);
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.evidence-list {
+  margin-bottom: var(--sp-5);
+}
+.evidence-list h3 {
+  font-size: var(--fs-h3);
+  margin-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--ink-100);
+  padding-bottom: var(--sp-2);
+}
+.evidence-item {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px dashed var(--ink-100);
+  font-size: var(--fs-small);
+}
+.evidence-item .src-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: var(--r-1);
+  display: inline-block;
+  height: 20px;
+  line-height: 18px;
+  text-align: center;
+}
+.src-rule  { background: var(--ink-blue-100); color: var(--source-rule);  border: 1px solid var(--source-rule); }
+.src-kb    { background: #e0e9d5;             color: var(--source-kb);    border: 1px solid var(--source-kb); }
+.src-net   { background: #f4ead0;             color: var(--source-net);   border: 1px solid var(--source-net); }
+.src-infer { background: var(--seal-50);      color: var(--source-infer); border: 1px solid var(--source-infer); }
+
+.expand-drawer {
+  background: var(--ink-50);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--r-2);
+  padding: var(--sp-4);
+  font-size: var(--fs-small);
+  color: var(--ink-600);
+}
+
+/* ============================================================
+   AI 标识（GB 45438-2025 显式标识，PDF 页脚 / 屏幕角标）
+   ============================================================ */
+.ai-mark {
+  position: fixed;
+  bottom: var(--sp-3);
+  right: var(--sp-3);
+  font-size: var(--fs-tiny);
+  color: var(--ink-400);
+  background: var(--ink-0);
+  border: 1px solid var(--ink-100);
+  padding: 4px 10px;
+  border-radius: var(--r-2);
+  letter-spacing: 0.05em;
+}
+.ai-mark::before {
+  content: "[AI]";
+  color: var(--seal-500);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+/* ============================================================
+   表单元素
+   ============================================================ */
+.field {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+.field label {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--ink-600);
+  margin-bottom: var(--sp-1);
+}
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--r-2);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  color: var(--ink-800);
+  background: var(--ink-0);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--seal-500);
+  box-shadow: 0 0 0 3px rgba(157, 47, 36, 0.12);
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 1100px) {
+  .shell { grid-template-columns: 200px 1fr; grid-template-areas: "topbar topbar" "sidebar main"; }
+  .aside { display: none; }
+}

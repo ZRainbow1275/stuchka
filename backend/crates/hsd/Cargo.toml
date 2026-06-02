@@ -1,0 +1,32 @@
+[package]
+name = "hsd"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# hsd — high-sensitivity detector (ai/04 + backend/04 §4.6, D4: pure Rust, zero Python).
+#
+# R1a (必死): regex strong-signal layer + ISO 7064 / Luhn validators + normalize with offset
+# map + decision fusion + mask. Offline, zero-network, zero-IO `scan()`.
+# R1b (争取): candle Chinese NER. This round ships the `NerLayer` skeleton/interface only
+#   (try_load returns Ok(None) when weights are absent/disabled), so candle is deliberately NOT
+#   a dependency yet (heavy build; deferred per the implementation brief §7.2 + reconciliation E).
+#
+# Dependency direction: hsd depends ONLY on data-model (wave A) + pure-Rust leaf libraries.
+# deny.toml + tests/isolation.rs forbid pyo3 / onnx / candle / reqwest / tokio / sqlx (D4, INV-01).
+[dependencies]
+data-model.workspace = true
+# Strong-signal regexes (R1a). regex 1.x has NO lookbehind support, so char-boundary checks are
+# hand-written (the spec's `(?<![0-9])` form is forbidden); see regex_layer.rs.
+regex = "1.12"
+# fancy-regex only for the Chinese address pattern (weak signal) where the spec uses it.
+fancy-regex = "0.18"
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+tracing = "0.1"
+# chrono for ScanReport.scanned_at (workspace time library, W2; data-model also uses chrono).
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+serde_json = "1"

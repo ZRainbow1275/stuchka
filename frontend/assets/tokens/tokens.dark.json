@@ -1,0 +1,15 @@
+{
+  "color": {
+    "neutral": {
+      "paper": "#1A1F26",
+      "rice": "#222831",
+      "stone": "#323A45",
+      "ash": "#9AA0A8",
+      "char": "#E6E3DC"
+    },
+    "brand": {
+      "seal_red": "#C45248",
+      "ink_blue": "#7595C2"
+    }
+  }
+}

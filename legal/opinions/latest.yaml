@@ -1,0 +1,22 @@
+# Stučka · 当前生效的律所法律意见书元数据
+#
+# 真实法律状态（非占位）：L0-02 备案豁免假设的律所法律意见书尚未出具。
+# 在 verdict 由律所正式回填之前，公开二进制发布被守门脚本阻断
+# （见 tools/release/check_l0_guard.py 与 spec/compliance/03-filing-exemption-stub.md §5）。
+#
+# 字段契约（spec/compliance/03 §5.3）：
+#   opinion_id : 意见书编号；未出具时为 null。
+#   issued_at  : 出具日期（YYYY-MM-DD）；未出具时为 null。
+#   verdict    : exempt | filing_required | ambiguous | none
+#                none 表示意见书尚未出具，是当前真实状态。
+#   sha256     : 意见书原文 SHA-256（小写十六进制）；未出具时为 null。
+#                意见书原文不进开源仓库，仓库仅保留此 hash 元数据。
+#   expires_at : 意见书失效日期（YYYY-MM-DD）；未出具时为 null。
+#
+# README 第二行由 tools/release/render_readme_header.py 依据本 verdict 渲染。
+
+opinion_id: null
+issued_at: null
+verdict: none
+sha256: null
+expires_at: null

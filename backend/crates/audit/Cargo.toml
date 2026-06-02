@@ -1,0 +1,57 @@
+[package]
+name = "audit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# audit = independent audit.sqlite + who/when/why/what four-tuple + prev_hash->record_hash
+# chain + ChaCha20-Poly1305 (random per-segment nonce, W5) + OpenTimestamps anchor + startup
+# chain verification (master-index §0.2 D3, data/04 全文). Physical isolation: this crate has
+# ZERO dependency on crates/db (D3). It depends down only on data-model (shared AuditCategory /
+# AuditEntryDto / error codes) and crypto (DEK -> audit_key HKDF derivation, C-3).
+#
+# sqlx is used via its RUN-TIME API only (query / query_scalar / query_as); the compile-time
+# query! macros are never used so the build is hermetic (no DATABASE_URL).
+#
+# Version locks per cross-crate reconciliation §E + W5/W7/W8:
+#   sqlx 0.8 (sqlite, runtime-tokio) / chacha20poly1305 0.10 / sha2 0.10 / rand_core 0.6 /
+#   zeroize 1.8 / opentimestamps 0.2 (verify-only — spec's 0.3 does NOT exist on crates.io,
+#   W8/I4) / uuid 1 v7 / chrono 0.4 / serde_json 1 / thiserror 2.
+[dependencies]
+data-model = { workspace = true, features = ["sqlx"] }
+crypto.workspace = true
+
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio",
+    "sqlite",
+    "chrono",
+] }
+tokio = { version = "1", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "sync",
+] }
+chacha20poly1305 = { version = "0.10", features = ["rand_core"] }
+sha2 = "0.10"
+zeroize = { version = "1.8", features = ["derive"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+# W8/I4: 0529 spec writes opentimestamps = "0.3" which does NOT exist (crates.io max stable is
+# 0.2.0, verify/parse only). Locked to 0.2 and used in the CLI-fallback path to parse/validate a
+# real .ots proof blob. Real calendar network upload + cron is R1b.
+opentimestamps = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+base64 = "0.22"
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+] }
+tempfile = "3"

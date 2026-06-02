@@ -1,0 +1,60 @@
+name: 工程类提问 (Engineering question)
+description: 关于构建、部署、自编译、API、贡献流程的工程类提问。严禁个案法律咨询。
+title: "[question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 重要警示（请务必阅读）
+        本提问模板**仅限工程类问题**（构建、部署、自编译、API、配置、贡献流程等）。
+
+        **本项目维护者不对您的具体案件提供法律意见。**
+
+        以下内容会被自动拦截并关闭（标记 `dispute-not-accepted`）：
+        - 个案咨询，如"我的案子怎么办"、"我会赢吗"、"帮我看看"、"判断一下我有没有理"；
+        - 任何个人信息（手机号、身份证号、银行卡号、家庭住址）；
+        - 教唆违规，如"怎么伪造"、"怎么绕过"、"如何不被识破"。
+
+        如您希望获得本系统辅助的法律意见，请直接使用本系统的"问诊"功能。
+        如您希望获得人工法律意见，请联系：12348 全国法律援助热线 / 12351 全国总工会维权热线 / 当地法律援助中心。
+
+        若您的提问被误判拦截，请使用"申诉误判"模板重新创建 Issue。
+  - type: checkboxes
+    id: precheck
+    attributes:
+      label: 提交前确认（必须全部勾选）
+      options:
+        - label: 我确认这是工程类问题，不是关于我个人案件的法律咨询。
+          required: true
+        - label: 我确认本 Issue 不包含任何个人信息（手机号、身份证号、银行卡号、家庭住址等）。
+          required: true
+        - label: 我已知本系统的法律意见请通过"问诊"功能获取，人工意见请拨打 12348 / 12351。
+          required: true
+  - type: dropdown
+    id: topic
+    attributes:
+      label: 问题领域
+      options:
+        - 构建 / 编译
+        - 部署 / 运行
+        - 自编译模式说明
+        - API / 集成
+        - 贡献流程 / DCO
+        - 其他工程问题
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: 你的工程问题
+      description: 清晰描述你的问题。请勿包含个案细节或个人信息。
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 已尝试 / 上下文（可选）
+      description: 你已经查过的文档、已尝试的方法。
+    validations:
+      required: false

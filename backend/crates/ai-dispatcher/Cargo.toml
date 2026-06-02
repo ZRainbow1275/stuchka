@@ -1,0 +1,48 @@
+[package]
+name = "ai-dispatcher"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# ai-dispatcher — M7 4-layer fallback FSM + provider primary/secondary + INV-08 three-tier
+# (master-index §0.4 / D6; ai/01 + ai/03). In-process library (D1): no socket, no bind; the
+# HTTP `/llm` routes live in `crates/api`, child-process spawn / READY in `crates/core`.
+#
+# Dependency direction (D6): api → ai-dispatcher → {data-model, hsd, rule-engine, kb}. This crate
+# MUST NOT be depended on by rule-engine / hsd (INV-01 physical isolation: `cargo tree -p
+# rule-engine` carries neither ai-dispatcher nor reqwest nor tokio).
+#
+# Version locks (cross-crate reconciliation E, verified against the local registry 2026-06-02):
+#   reqwest 0.12 (json + rustls-tls)  — 0.13 is a breaking major, deferred to R1.5 (W7)
+#   tokio 1 (>=1.42 floor)            — multi-thread runtime + timeout + interval
+#   async-trait 0.1                   — Provider trait is object-safe (`dyn Provider`), AFIT unfit
+#   secrecy 0.10                      — SecretString = SecretBox<str>; api_key never logged
+#   thiserror 2 / chrono 0.4 / uuid v7 — workspace-wide (W1 / W2)
+[dependencies]
+data-model.workspace = true
+hsd.workspace = true
+rule-engine.workspace = true
+kb.workspace = true
+
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "time", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+async-trait = "0.1"
+secrecy = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v7", "serde"] }
+# secrets.toml ([siliconflow] gateway config) parsing. 0.8 is the resolvable stable head.
+toml = "0.8"
+num_cpus = "1"
+# SHA-256 for the local model integrity gate (LocalQwen::try_load). 0.10 matches the workspace (W7).
+sha2 = "0.10"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+# Integration tests build RuleOutcome fixtures (Money(Decimal)).
+rust_decimal = { version = "1", features = ["serde"] }

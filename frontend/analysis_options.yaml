@@ -1,0 +1,24 @@
+# Stučka frontend analyzer config.
+#
+# Visual-constant invariants (spec 01 §1.6 / §1.7 / §1.8) are enforced as a layered defence:
+#   1. The `StuchkaIcons` (Lucide) + `StuchkaSemanticColors` token wrappers are the only sanctioned
+#      sources for icons / colors in business code.
+#   2. `tools/lint_no_emoji.dart` is the CI Emoji scanner (run in test/no_emoji_lint_test.dart).
+#   3. `test/lint/no_forbidden_icons_test.dart` greps the lib tree for `Icons.` / `CupertinoIcons.`.
+#
+# The spec's `custom_lint` plugin (avoid-hardcoded-colors / forbid-emoji-in-string-literal) is the
+# R-phase target; it is deferred here to keep `flutter analyze` deterministic on the beta toolchain.
+# The grep + emoji tests provide the same enforcement today.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Treat any leftover TODO as info, not a build break.
+    todo: ignore
+  exclude:
+    - lib/theme/generated/**
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true

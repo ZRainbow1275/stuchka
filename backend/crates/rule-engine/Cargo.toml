@@ -1,0 +1,22 @@
+[package]
+name = "rule-engine"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# rule-engine — M9 compute + M5 deadline (pure rules, zero AI / zero HTTP, INV-01).
+# Depends ONLY on data-model (wave A) + leaf libraries below. cargo-deny (deny.toml) +
+# tests/isolation.rs forbid tokio / reqwest / axum / candle / pyo3 / onnx from the tree.
+[dependencies]
+data-model.workspace = true
+serde = { version = "1", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde", "macros"] }
+# serde_yaml (0.9) is deprecated/unmaintained; workspace decision picks serde_norway (active 0.9 fork).
+serde_norway = "0.9"
+thiserror = "2"
+tracing = "0.1"
+
+[dev-dependencies]
+serde_json = "1"

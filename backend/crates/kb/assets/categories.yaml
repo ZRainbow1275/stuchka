@@ -1,0 +1,150 @@
+# 劳动纠纷 20 大类 / 85 子类编码 (data/01 §1.7, KBC-03)
+# 编码格式: 大类 LD-NN, 子类 LD-NN-NN (^LD-[0-9]{2}-[0-9]{2}$)
+# 来源: docs/01-labor-dispute-taxonomy.md 20 类完整分类体系
+# R1 做深 5 大类: LD-03 工资报酬 / LD-02 解除终止 / LD-01 合同订立(未签) / LD-05 工伤 / LD-09 休息休假(加班)
+categories:
+  - code: LD-01
+    name: 劳动合同订立纠纷
+    subcategories:
+      - { code: LD-01-01, name: 未签订书面劳动合同二倍工资 }
+      - { code: LD-01-02, name: 试用期约定违法 }
+      - { code: LD-01-03, name: 合同条款无效或显失公平 }
+      - { code: LD-01-04, name: 入职欺诈与背景虚假 }
+      - { code: LD-01-05, name: 服务期与培训费用约定争议 }
+  - code: LD-02
+    name: 劳动合同解除与终止纠纷
+    subcategories:
+      - { code: LD-02-01, name: 违法解除劳动合同 }
+      - { code: LD-02-02, name: 经济性裁员 }
+      - { code: LD-02-03, name: 协商解除经济补偿 }
+      - { code: LD-02-04, name: 劳动者单方解除经济补偿 }
+      - { code: LD-02-05, name: 合同到期终止补偿 }
+      - { code: LD-02-06, name: 严重违纪解除合法性 }
+  - code: LD-03
+    name: 工资报酬纠纷
+    subcategories:
+      - { code: LD-03-01, name: 拖欠工资 }
+      - { code: LD-03-02, name: 克扣工资 }
+      - { code: LD-03-03, name: 最低工资标准争议 }
+      - { code: LD-03-04, name: 提成奖金计算争议 }
+      - { code: LD-03-05, name: 恶意欠薪加付赔偿金 }
+      - { code: LD-03-06, name: 工资支付凭证与举证 }
+  - code: LD-04
+    name: 社会保险纠纷
+    subcategories:
+      - { code: LD-04-01, name: 弃缴约定无效与单方解除 }
+      - { code: LD-04-02, name: 未缴或欠缴社会保险 }
+      - { code: LD-04-03, name: 低缴漏缴社保基数争议 }
+      - { code: LD-04-04, name: 未参保导致工伤损失 }
+      - { code: LD-04-05, name: 社保转移接续争议 }
+  - code: LD-05
+    name: 工伤与职业病纠纷
+    subcategories:
+      - { code: LD-05-01, name: 工伤认定争议 }
+      - { code: LD-05-02, name: 劳动能力鉴定与伤残等级 }
+      - { code: LD-05-03, name: 工伤医疗费与停工留薪 }
+      - { code: LD-05-04, name: 一次性伤残就业补助金 }
+      - { code: LD-05-05, name: 工亡待遇与供养亲属抚恤 }
+      - { code: LD-05-06, name: 职业病诊断与赔偿 }
+  - code: LD-06
+    name: 竞业限制与商业秘密纠纷
+    subcategories:
+      - { code: LD-06-01, name: 竞业限制补偿金 }
+      - { code: LD-06-02, name: 违反竞业限制违约金 }
+      - { code: LD-06-03, name: 商业秘密侵权 }
+      - { code: LD-06-04, name: 竞业限制范围与期限合理性 }
+  - code: LD-07
+    name: 劳务派遣纠纷
+    subcategories:
+      - { code: LD-07-01, name: 同工同酬争议 }
+      - { code: LD-07-02, name: 派遣岗位三性违法 }
+      - { code: LD-07-03, name: 用工单位与派遣单位连带责任 }
+      - { code: LD-07-04, name: 退回派遣与退工争议 }
+  - code: LD-08
+    name: 女职工与未成年工特殊保护纠纷
+    subcategories:
+      - { code: LD-08-01, name: 三期女职工解除保护 }
+      - { code: LD-08-02, name: 产假与生育待遇 }
+      - { code: LD-08-03, name: 哺乳期工作安排 }
+      - { code: LD-08-04, name: 未成年工禁忌劳动 }
+  - code: LD-09
+    name: 休息休假纠纷
+    subcategories:
+      - { code: LD-09-01, name: 加班费计算与举证 }
+      - { code: LD-09-02, name: 综合计算工时与不定时工时 }
+      - { code: LD-09-03, name: 带薪年休假 }
+      - { code: LD-09-04, name: 法定节假日加班 }
+  - code: LD-10
+    name: 劳动关系确认纠纷
+    subcategories:
+      - { code: LD-10-01, name: 事实劳动关系认定 }
+      - { code: LD-10-02, name: 双重劳动关系 }
+      - { code: LD-10-03, name: 承包挂靠用工关系认定 }
+      - { code: LD-10-04, name: 实习与劳动关系区分 }
+  - code: LD-11
+    name: 集体劳动争议
+    subcategories:
+      - { code: LD-11-01, name: 集体合同争议 }
+      - { code: LD-11-02, name: 群体性欠薪 }
+      - { code: LD-11-03, name: 集体停工与协商 }
+  - code: LD-12
+    name: 非全日制用工纠纷
+    subcategories:
+      - { code: LD-12-01, name: 非全日制工时认定 }
+      - { code: LD-12-02, name: 非全日制小时工资 }
+      - { code: LD-12-03, name: 非全日制工伤待遇 }
+  - code: LD-13
+    name: 新就业形态劳动者权益纠纷
+    subcategories:
+      - { code: LD-13-01, name: 平台用工劳动关系认定 }
+      - { code: LD-13-02, name: 算法控制三要素 }
+      - { code: LD-13-03, name: 配送骑手职业伤害保障 }
+      - { code: LD-13-04, name: 平台抽成与收入争议 }
+  - code: LD-14
+    name: 跨境与涉外劳动纠纷
+    subcategories:
+      - { code: LD-14-01, name: 外籍人员就业许可 }
+      - { code: LD-14-02, name: 涉外劳动合同法律适用 }
+      - { code: LD-14-03, name: 境外派遣与外派待遇 }
+  - code: LD-15
+    name: 退休返聘与超龄用工纠纷
+    subcategories:
+      - { code: LD-15-01, name: 退休返聘劳务关系认定 }
+      - { code: LD-15-02, name: 超龄劳动者工伤待遇 }
+      - { code: LD-15-03, name: 达到退休年龄合同终止 }
+  - code: LD-16
+    name: AI与自动化技术替代岗位纠纷
+    subcategories:
+      - { code: LD-16-01, name: 技术替代经济性裁员 }
+      - { code: LD-16-02, name: 岗位消失调岗合理性 }
+      - { code: LD-16-03, name: 自动化转岗培训义务 }
+      - { code: LD-16-04, name: 客观情况重大变化解除 }
+  - code: LD-17
+    name: 远程办公与混合工作模式纠纷
+    subcategories:
+      - { code: LD-17-01, name: 远程办公工时认定 }
+      - { code: LD-17-02, name: 居家办公费用分担 }
+      - { code: LD-17-03, name: 混合办公考勤争议 }
+      - { code: LD-17-04, name: 远程工伤认定 }
+  - code: LD-18
+    name: 数字监控与职场隐私权纠纷
+    subcategories:
+      - { code: LD-18-01, name: 工作设备监控合法性 }
+      - { code: LD-18-02, name: 员工个人信息处理 }
+      - { code: LD-18-03, name: 离职数据归还与删除 }
+      - { code: LD-18-04, name: 监控证据合法性认定 }
+  - code: LD-19
+    name: 算法管理与劳动权益纠纷
+    subcategories:
+      - { code: LD-19-01, name: 算法绩效考核争议 }
+      - { code: LD-19-02, name: 自动化排班与休息权 }
+      - { code: LD-19-03, name: 算法解雇透明度 }
+      - { code: LD-19-04, name: 数据画像与差别待遇 }
+  - code: LD-20
+    name: 直播电商与自媒体从业者劳动关系认定纠纷
+    subcategories:
+      - { code: LD-20-01, name: 主播劳动关系认定 }
+      - { code: LD-20-02, name: MCN机构合作关系定性 }
+      - { code: LD-20-03, name: 直播收入与分成争议 }
+      - { code: LD-20-04, name: 自媒体创作者用工认定 }
+      - { code: LD-20-05, name: 网红违约金与解约争议 }

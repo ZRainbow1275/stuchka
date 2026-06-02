@@ -1,0 +1,60 @@
+[package]
+name = "kb"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# `kb` — knowledge base fetch + version hash + git diff (INV-04) + hybrid search
+# (master-index §0.4 / D6). Depends ONLY on data-model (wave A): reuses the D8 LawRef
+# parser / content_hash and the shared enums. INV-01 boundary is not this crate's concern
+# (kb MAY link reqwest/gix/tokio), but it never pulls AI crates.
+#
+# Version locks (verified against the local crates.io sparse index on 2026-06-02):
+#   tantivy 0.26.1  — BM25 single path (spec 0.22 is 4 minors stale; 0.26 is the resolvable head)
+#   tantivy-jieba 0.20 + jieba-rs 0.10 — Chinese word segmentation tokenizer for tantivy 0.26
+#   sha2 0.10       — locked at 0.10 (0.11 is RC); matches data-model / audit (W7)
+#   serde_norway 0.9 — categories.yaml parsing (serde_yaml is deprecated; W6)
+#   gix 0.84        — git pull diff skeleton (spec 0.66 is stale; 0.84 is the resolvable head)
+#   thiserror 2     — workspace-wide (W1)
+[dependencies]
+data-model.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_norway = "0.9"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+sha2 = "0.10"
+tracing = "0.1"
+uuid = { version = "1", features = ["v7", "serde"] }
+# BM25 full-text search (single path for R1a; vector backend deferred to L0-03).
+tantivy = "0.26"
+# Chinese word segmentation tokenizer bridging jieba-rs into tantivy.
+tantivy-jieba = "0.20"
+jieba-rs = "0.10"
+# git pull diff increment protocol (R1a skeleton; full pull is make-usable).
+# `sha1` is required (gix-hash has zero ObjectId variants without a hash feature); `blocking-network-client`
+# enables the future network fetch leg without forcing async.
+gix = { version = "0.84", default-features = false, features = ["sha1", "blocking-network-client"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+default = []
+# Optional application-layer ANN vector index (hnsw_rs) reserved behind the LawSearch trait.
+# The default BM25 path needs no vector backend; this is the deferred make-usable hybrid leg.
+hnsw = ["dep:hnsw_rs"]
+# Gate sqlx Type/FromRow derives on KbCheckFrequency / KbVersion so the db layer can persist them
+# (mirrors the data-model convention); off by default so pure consumers never link sqlx.
+sqlx = ["dep:sqlx", "data-model/sqlx"]
+
+[dependencies.hnsw_rs]
+version = "0.3"
+optional = true
+
+[dependencies.sqlx]
+version = "0.8"
+optional = true
+default-features = false
+features = ["sqlite", "chrono", "macros"]

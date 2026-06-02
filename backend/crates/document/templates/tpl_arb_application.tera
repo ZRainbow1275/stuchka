@@ -1,0 +1,26 @@
+{{ title }}
+
+申请人：{{ applicant }}
+被申请人：{{ respondent }}
+仲裁管辖：{{ jurisdiction }}（{{ province }}{{ city }}）
+
+仲裁请求：
+{% for c in claims %}{{ c.index }}. {{ c.description }}{% if c.amount %}（金额：人民币 {{ c.amount }} 元）{% endif %}
+{% endfor %}
+事实与理由：
+{% for f in facts %}[fact:{{ f.fact_id }}] {{ f.statement }}
+{% endfor %}
+法律依据：
+{% for lr in law_refs %}- {{ lr.title }}（{{ lr.urn }}）
+{% endfor %}
+AI 辅助分析意见：
+{% for p in ai_paragraphs %}{{ p.text }}
+{% endfor %}
+证据清单：
+{% for e in evidence_index %}- {{ e }}
+{% endfor %}
+此致
+{{ jurisdiction }}
+
+申请人（签名）：________________
+日期：________________

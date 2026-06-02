@@ -1,0 +1,13 @@
+# Stučka Issues 入口配置（spec 04-gplv3-readme-front.md §5.4）
+# blank_issues_enabled: false 强制所有 Issue 走模板，配合 §5.1 关键词机器化阻断咨询（C-B-7）。
+blank_issues_enabled: false
+contact_links:
+  - name: 使用本系统的"问诊"功能获得辅助法律意见
+    url: https://github.com/stucka/stucka#使用指南
+    about: 本 Issues 区不提供个案法律意见。如需本系统辅助的法律意见，请直接使用本系统的"问诊"功能。
+  - name: 12348 全国法律援助热线
+    url: https://12348.gov.cn/
+    about: 需要人工法律意见，请拨打 12348 全国法律援助热线或联系当地法律援助中心。
+  - name: 12351 全国总工会维权热线
+    url: https://www.acftu.org/
+    about: 涉及工会维权事项，请拨打 12351 全国总工会维权热线。

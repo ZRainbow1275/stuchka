@@ -1,0 +1,52 @@
+[package]
+name = "crypto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# crypto = Layer-0 master key (Argon2id KEK + DEK wrap) + Layer-1 FS encryption detect +
+# Layer-2 field cipher (ChaCha20Poly1305 SQLite fallback / pgcrypto interface) + age high-sensitivity
+# external blob store + three-way password recovery (keychain / BIP39 / USB file). Per backend/04 and
+# master-index §0.4 (D6). Depends only on data-model (INV-01: never pulls sqlx/tokio/reqwest/axum/AI).
+#
+# Version locks per cross-crate reconciliation §E + W7:
+#   argon2 0.5 / chacha20poly1305 0.10 / hkdf 0.12 / sha2 0.10 / rand_core 0.6 / ciborium 0.2 /
+#   zeroize 1.8. Verified-latest stable for the libs the brief flagged as outdated:
+#   age 0.11 (Encryptor::with_recipients now takes an iterator + Decryptor is a struct, not an enum),
+#   keyring 3.6 (Entry::new -> Result, set_secret/get_secret, windows-native backend feature),
+#   bip39 2.x (Mnemonic::from_entropy_in + to_seed). bech32 0.9 matches age's encoding to build a
+#   deterministic age Identity from the DEK via FromStr.
+[dependencies]
+data-model.workspace = true
+
+# Layer-0 master key
+argon2 = "0.5"
+chacha20poly1305 = { version = "0.10", features = ["rand_core"] }
+hkdf = "0.12"
+sha2 = "0.10"
+zeroize = { version = "1.8", features = ["derive"] }
+ciborium = "0.2"
+rand_core = { version = "0.6", features = ["getrandom"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+uuid = { version = "1", features = ["v7"] }
+
+# Layer-2 high-sensitivity external blob store (age 0.11, verified latest stable)
+age = "0.11"
+bech32 = "0.9"
+
+# Three-way password recovery
+bip39 = { version = "2", features = ["chinese-simplified"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Windows Credential Manager backend for keychain recovery (path A). keyring 3.x: Entry::new
+# returns Result, secret API is set_secret/get_secret, the Windows backend is feature-gated.
+keyring = { version = "3", features = ["windows-native"] }
+
+[features]
+default = []
+# pgcrypto PG path is blocked by L0-03 (DB dialect TBD, D2). Only the interface lives behind this
+# gate; the SQLite ChaCha20Poly1305 fallback is the real R1a path.
+pg = []

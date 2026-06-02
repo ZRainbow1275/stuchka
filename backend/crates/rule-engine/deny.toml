@@ -1,0 +1,65 @@
+# cargo-deny config for rule-engine — INV-01 physical isolation (ai/02 §2.8, ai/05 §5.10).
+#
+# Run from this crate dir:  cargo deny --manifest-path Cargo.toml check bans
+# The [bans] section red-flags any AI / HTTP / inference / Python / async-runtime crate in the
+# rule-engine dependency tree. tests/isolation.rs enforces the same set inside `cargo test`.
+
+[graph]
+targets = [
+    { triple = "x86_64-pc-windows-msvc" },
+    { triple = "x86_64-unknown-linux-gnu" },
+]
+all-features = false
+
+[bans]
+multiple-versions = "allow"
+wildcards = "allow"
+
+# Any of these appearing in the rule-engine tree is a hard error (INV-01).
+deny = [
+    { name = "tokio" },
+    { name = "reqwest" },
+    { name = "hyper" },
+    { name = "axum" },
+    { name = "tower-http" },
+    { name = "tonic" },
+    { name = "actix-web" },
+    { name = "rocket" },
+    { name = "ureq" },
+    { name = "isahc" },
+    { name = "candle-core" },
+    { name = "candle-nn" },
+    { name = "candle-transformers" },
+    { name = "pyo3" },
+    { name = "onnxruntime" },
+    { name = "ort" },
+    { name = "llama-cpp-2" },
+    { name = "llama-cpp-sys-2" },
+    { name = "sqlx" },
+]
+
+[advisories]
+# Deprecated serde_yaml is replaced by serde_norway (workspace decision); keep advisories strict.
+yanked = "deny"
+
+[licenses]
+# Workspace is GPL-3.0-only; permit the common permissive licenses of leaf deps.
+allow = [
+    "GPL-3.0",
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "MPL-2.0",
+    "CC0-1.0",
+]
+confidence-threshold = 0.8
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

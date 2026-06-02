@@ -1,0 +1,90 @@
+/* ============================================================
+   Stučka editor structure styles. Reuses tokens.css variables
+   (visual authority); no hardcoded colors (A24).
+   ============================================================ */
+
+.ProseMirror {
+  font-family: var(--ff-doc-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-loose);
+  color: var(--ink-800);
+  background: var(--ink-0);
+  padding: var(--sp-6) var(--sp-7);
+  min-height: 60vh;
+  outline: none;
+}
+
+.ProseMirror h1 { font-family: var(--ff-doc-title); text-align: center; }
+
+/* Fact-id card (inline atom). */
+.stuchka-fact {
+  display: inline-block;
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-1);
+  border: 1px solid var(--ink-blue-500);
+  color: var(--ink-blue-500);
+  background: var(--ink-blue-100);
+  font-size: var(--fs-small);
+}
+.stuchka-fact[data-state='confirmed'] { border-color: var(--state-ok); color: var(--state-ok); }
+.stuchka-fact[data-state='disputed'] { border-color: var(--state-warn); color: var(--state-warn); }
+.stuchka-fact[data-state='deprecated'] { opacity: 0.5; text-decoration: line-through; }
+
+/* Law-ref inline reference. */
+.stuchka-law-ref {
+  color: var(--seal-700);
+  font-family: var(--ff-mono);
+  font-size: var(--fs-small);
+}
+
+/* AI-segment span (subtle underline; the final watermark is backend-only). */
+.stuchka-ai-segment {
+  border-bottom: 1px dotted var(--source-infer);
+}
+
+/* Template slot. */
+.stuchka-slot {
+  padding: 0 var(--sp-1);
+  background: var(--ink-50);
+  border: 1px dashed var(--ink-200);
+  border-radius: var(--r-1);
+  color: var(--ink-400);
+}
+.stuchka-slot-locked {
+  border-style: solid;
+  border-color: var(--seal-500);
+  color: var(--seal-700);
+  background: var(--seal-50);
+}
+
+/* Source tag chip (icon + label). */
+.src-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.src-tag svg { width: 12px; height: 12px; }
+
+/* Lucide warning banner (replaces Prototype Emoji, I6). */
+.stuchka-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--state-warn);
+  font-size: var(--fs-small);
+}
+
+/* Three-column merge view. */
+.merge-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--ink-100);
+}
+.merge-row .col.mine { border-left: 3px solid var(--ink-blue-500); padding-left: var(--sp-2); }
+.merge-row .col.theirs { border-left: 3px solid var(--state-pending); padding-left: var(--sp-2); }
+.merge-col-head { font-size: var(--fs-tiny); color: var(--ink-400); margin-bottom: var(--sp-1); }
+.merge-body { font-size: var(--fs-small); line-height: var(--lh-loose); }
+.merge-row .col.actions { display: flex; flex-direction: column; gap: var(--sp-2); }
+.merge-row .col.actions button { display: inline-flex; align-items: center; gap: 4px; }

@@ -1,0 +1,74 @@
+name: 缺陷报告 (Bug report)
+description: 报告 Stučka 的工程缺陷。请勿在此提交个案咨询或包含个人信息。
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 提交前请确认
+        本 Issues 区仅接受 bug 报告、功能建议、合规反馈与开源治理讨论，
+        不接受个案法律咨询。请勿在标题或正文中填写手机号、身份证号、银行卡号、家庭住址等个人信息。
+        如需个案辅助意见，请使用本系统的"问诊"功能；如需人工法律意见，请拨打 12348 / 12351。
+  - type: checkboxes
+    id: precheck
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我确认本 Issue 不包含任何个人信息（手机号、身份证号、银行卡号、家庭住址等）。
+          required: true
+        - label: 我确认本 Issue 是工程缺陷报告，不是个案法律咨询。
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本 / 构建号
+      description: 在"关于"页面或 CLI `--version` 中可见。
+      placeholder: 例如 R1a-2026.06.01 / commit a04e54f
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 运行平台
+      options:
+        - Windows 桌面端
+        - macOS 桌面端
+        - Linux 桌面端
+        - 后端 / 自编译
+        - 其他（请在正文说明）
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 你期望系统如何表现。
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 系统实际表现，附错误信息（请脱敏）。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 让维护者能稳定复现的最小步骤。
+      placeholder: |
+        1. 打开 ...
+        2. 点击 ...
+        3. 观察到 ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 截图（可选，请脱敏）
+      description: 粘贴相关日志或截图。请务必移除任何个人信息。
+      render: text
+    validations:
+      required: false

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mood="professional">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP (channel A hard constraint, D1): `connect-src 'none'` forbids the WebView
+      from opening ANY network connection (including 127.0.0.1 channel B). All
+      cross-process traffic must go through the Dart shell. No remote scripts/styles.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none';"
+    />
+    <title>Stučka · 文书工作台</title>
+    <link rel="stylesheet" href="./src/tokens.css" />
+    <link rel="stylesheet" href="./src/editor.css" />
+  </head>
+  <body>
+    <div id="stuchka-editor" class="tab-panel" style="display: block"></div>
+    <!-- The UMD bundle (built to dist/stuchka-editor.umd.js, copied to assets/web/editor/). -->
+    <script src="./dist/stuchka-editor.umd.js"></script>
+    <!--
+      E4: boot shim is an EXTERNAL script (./boot.js) so the strict CSP
+      `script-src 'self'` (no 'unsafe-inline') is identical in this source copy and
+      the copied frontend asset, and the page actually boots under it.
+    -->
+    <script src="./boot.js"></script>
+  </body>
+</html>

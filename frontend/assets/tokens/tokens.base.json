@@ -1,0 +1,51 @@
+{
+  "color": {
+    "brand": {
+      "seal_red": "#A33A2F",
+      "seal_red_deep": "#7E2A23",
+      "seal_red_soft": "#D8615A",
+      "ink_blue": "#1F3A5F",
+      "ink_blue_deep": "#13243D",
+      "ink_blue_soft": "#3F5A85"
+    },
+    "neutral": {
+      "paper": "#FBF8F2",
+      "rice": "#F2EDE2",
+      "stone": "#D9D4C7",
+      "ash": "#7F7A6F",
+      "char": "#2A2823"
+    },
+    "semantic": {
+      "risk_high": "#B0392B",
+      "risk_mid": "#C77A3A",
+      "risk_low": "#3F7A4F",
+      "abstain": "#5B5B5B",
+      "frozen": "#1F3A5F"
+    },
+    "source": {
+      "rule": "#1F3A5F",
+      "kb": "#3F7A4F",
+      "online": "#C77A3A",
+      "inferred": "#7E2A23"
+    }
+  },
+  "typography": {
+    "display": 28,
+    "title": 22,
+    "heading": 18,
+    "body": 15,
+    "caption": 13,
+    "mono": 13
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "xxl": 32,
+    "radius_seal": 4,
+    "radius_card": 8,
+    "radius_dialog": 12
+  }
+}

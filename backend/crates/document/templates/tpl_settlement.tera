@@ -1,0 +1,27 @@
+{{ title }}
+
+甲方（用人单位）：{{ respondent }}
+乙方（劳动者）：{{ applicant }}
+签订地：{{ province }}{{ city }}
+
+鉴于双方就劳动争议事宜，经平等自愿协商，达成如下和解协议：
+
+和解内容：
+{% for c in claims %}{{ c.index }}. {{ c.description }}{% if c.amount %}（金额：人民币 {{ c.amount }} 元）{% endif %}
+{% endfor %}
+事实基础：
+{% for f in facts %}[fact:{{ f.fact_id }}] {{ f.statement }}
+{% endfor %}
+法律依据：
+{% for lr in law_refs %}- {{ lr.title }}（{{ lr.urn }}）
+{% endfor %}
+AI 辅助分析意见：
+{% for p in ai_paragraphs %}{{ p.text }}
+{% endfor %}
+{{ inv10_disclaimer }}
+
+本协议一式两份，双方各执一份，自双方签字（盖章）之日起生效。
+
+甲方（签章）：________________
+乙方（签名）：________________
+日期：________________

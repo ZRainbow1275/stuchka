@@ -1,0 +1,33 @@
+# Stučka backend workspace — 12 crates per 0529 master-index §0.4 (D6).
+# MSRV Rust 1.84. Real external deps are introduced per-crate in the module phase.
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.84"
+# Single SPDX per compliance/04 §1.1 (W3): GPL-3.0-only (not -or-later).
+license = "GPL-3.0-only"
+authors = ["Stučka contributors"]
+repository = "stuchka"
+
+[workspace.dependencies]
+data-model    = { path = "crates/data-model" }
+core          = { path = "crates/core" }
+db            = { path = "crates/db" }
+sync          = { path = "crates/sync" }
+crypto        = { path = "crates/crypto" }
+hsd           = { path = "crates/hsd" }
+rule-engine   = { path = "crates/rule-engine" }
+ai-dispatcher = { path = "crates/ai-dispatcher" }
+kb            = { path = "crates/kb" }
+document      = { path = "crates/document" }
+audit         = { path = "crates/audit" }
+api           = { path = "crates/api" }
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1

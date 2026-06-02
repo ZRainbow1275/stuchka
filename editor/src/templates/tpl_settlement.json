@@ -1,0 +1,42 @@
+{
+  "id": "tpl_settlement_v1",
+  "template_id": "settlement",
+  "title": "劳动争议和解协议",
+  "version": "1.0.0",
+  "applicable_subtypes": ["WAGE_ARREARS", "ILLEGAL_TERMINATION"],
+  "applicable_regions": ["GD", "BJ", "SH", "JS", "ZJ"],
+  "slots": [
+    { "key": "applicant.name", "required": true, "validator": "non_empty" },
+    { "key": "applicant.id_no", "required": true, "validator": "id_card" },
+    { "key": "respondent.name", "required": true, "validator": "non_empty" },
+    { "key": "respondent.unified_code", "required": false, "validator": "uscc" },
+    { "key": "claims", "required": true, "validator": "non_empty_list" },
+    { "key": "facts", "required": true, "validator": "non_empty_list" },
+    { "key": "law_refs", "required": true, "validator": "non_empty_list" },
+    {
+      "key": "inv10.disclaimer",
+      "required": true,
+      "deletable": false,
+      "locked": true,
+      "validator": "inv10_disclaimer",
+      "text": "【重要风险提示（不可删除）】本和解协议一经签署即对双方产生法律约束力。若本协议约定的金额低于法定应得数额的 80%，您可能因此放弃部分法定权益；签署前请务必确认：本协议系您本人在充分知悉法律后果后自愿作出的决定。如有疑问，请咨询执业律师或当地法律援助机构（全国法援热线：12348）。"
+    }
+  ],
+  "body_blocks": [
+    { "type": "heading", "level": 1, "text": "劳动争议和解协议" },
+    { "type": "paragraph", "slot": "applicant.block" },
+    { "type": "paragraph", "slot": "respondent.block" },
+    { "type": "heading", "level": 3, "text": "和解条款" },
+    { "type": "orderedList", "slot": "claims" },
+    { "type": "heading", "level": 3, "text": "事实背景" },
+    { "type": "paragraph", "slot": "facts" },
+    { "type": "heading", "level": 3, "text": "法律依据" },
+    { "type": "blockquote", "slot": "law_refs" },
+    { "type": "paragraph", "slot": "inv10.disclaimer", "locked": true }
+  ],
+  "gb45438_request": {
+    "header": "本文书由 Stučka 辅助生成，最终内容由当事人审定（GB/T 45438-2025）",
+    "request_backend_watermark": true,
+    "ai_segment_tracking": true
+  }
+}

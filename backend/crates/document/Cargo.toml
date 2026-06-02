@@ -1,0 +1,62 @@
+[package]
+name = "document"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# document = GB 45438-2025 four-layer marking + final PDF / dossier three-file bundle, the SOLE
+# authority (master-index §0.2 D5; compliance/01 is the规范 authority). This crate is the only
+# generator of the four marking layers and the final distributable PDF.
+#
+# Layering / responsibilities:
+#   template.rs            tera-rendered 6 hard legal documents (LawRef URN embedding)
+#   render.rs              backend-agnostic RenderDoc intermediate representation
+#   gb45438/{explicit,metadata,zerowidth,lsb_image,lsb_pdf,manifest,manifest_validator,mod}
+#                          the four layers + run_all_layers (the UNIQUE entry)
+#   pdf.rs                 final PDF bytes via lopdf (real, pure-Rust); pdfium-render is the
+#                          optional rasterisation/verification seam (needs the runtime pdfium
+#                          native lib; that integration test is #[ignore] when the lib is absent).
+#   export/{md,json}.rs    Markdown + JSON serialisation for the三件套 bundle
+#   audit_event.rs         writes the Export audit event to the independent audit.sqlite (D3)
+#
+# Version locks per cross-crate reconciliation §E: tera 1.x / lopdf 0.38 / pdfium-render 0.9 /
+# blake3 1 / sha2 0.10 / crc 3 / zip 2 / image 0.25. thiserror 2 (W1), chrono 0.4 (W2), uuid v7 (D9).
+[dependencies]
+data-model.workspace = true
+db = { workspace = true, optional = true }
+audit = { workspace = true, optional = true }
+
+tera = "1"
+lopdf = "0.38"
+# pdfium-render is a high-level wrapper; the crate compiles without the native pdfium lib (the lib
+# is only loaded at runtime when a render path binds it). The rasterisation integration test is
+# gated #[ignore] so a CI host without pdfium.dll still builds & tests the rest of the crate green.
+pdfium-render = { version = "0.9", optional = true }
+blake3 = "1"
+sha2 = "0.10"
+crc = "3"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde"] }
+thiserror = "2"
+
+[features]
+# `audit` wires the independent audit.sqlite Export-event write (D3) + db; on by default so
+# export_dossier records the real audit entry. Turn it off for a pure pdf/md/json/watermark build.
+default = ["audit"]
+audit = ["dep:audit", "dep:db"]
+# Optional pdfium-render rasterisation/verification seam (needs runtime pdfium native lib).
+pdfium = ["dep:pdfium-render"]
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+] }
+tempfile = "3"

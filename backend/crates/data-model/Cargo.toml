@@ -1,0 +1,27 @@
+[package]
+name = "data-model"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# data-model is the workspace leaf domain crate (master-index §0.4 / D9).
+# Default deps are pure-domain only: serde / uuid / chrono / rust_decimal / thiserror / serde_json.
+# sqlx FromRow/Type derives are gated behind the optional "sqlx" feature via cfg_attr so that
+# the db layer can enable it while rule-engine never does (INV-01 boundary).
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = { version = "1", features = ["serde"] }
+thiserror = "2"
+# D8 LawRef content-addressing hash (data/02 §2.3). Locked at 0.10 per W7 (digest ecosystem
+# consistency / hermetic build). The D8 URN parser is hand-written (no nom/pest dependency).
+sha2 = "0.10"
+# Optional: run-time sqlx API only (no compile-time query! macros → hermetic build, no DATABASE_URL).
+sqlx = { version = "0.8", optional = true, default-features = false, features = ["sqlite", "chrono", "rust_decimal", "macros"] }
+
+[features]
+default = []
+sqlx = ["dep:sqlx"]

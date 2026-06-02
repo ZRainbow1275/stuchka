@@ -1,0 +1,32 @@
+[package]
+name = "core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# core owns boot / child-process spawn / READY handshake / first-run wizard (D1).
+# The READY handshake (bind 127.0.0.1:0 + 64-byte random token) and runtime config live here;
+# crates/api consumes them in its main.rs entry point. Boot initialization (open db + audit,
+# derive the session DEK, build RuleEngine + KB index) lives in `boot.rs` and depends on the
+# module crates directly (api re-assembles them into its AppState).
+[dependencies]
+data-model.workspace = true
+db.workspace = true
+audit.workspace = true
+crypto.workspace = true
+hsd.workspace = true
+rule-engine.workspace = true
+kb.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["net", "rt", "rt-multi-thread", "macros", "fs"] }
+rand = "0.8"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+anyhow = "1"
+
+[dev-dependencies]
+tokio = { version = "1", default-features = false, features = ["rt", "rt-multi-thread", "macros", "net"] }
+uuid = { version = "1", features = ["v7"] }

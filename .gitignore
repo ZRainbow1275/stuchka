@@ -1,0 +1,45 @@
+# Stučka — top-level ignore for the published product repo.
+# Defense-in-depth on top of backend/.gitignore, editor/.gitignore, frontend/.gitignore.
+
+# --- Secrets: NEVER commit (SiliconFlow key etc.) ---
+**/secrets.toml
+backend/config/secrets.toml
+**/.env
+**/.env.local
+**/.env.*.local
+
+# --- Rust ---
+/backend/target/
+target/
+**/*.rs.bk
+
+# --- Local databases / runtime artifacts ---
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-shm
+audit.sqlite*
+
+# --- Node / editor build ---
+editor/node_modules/
+editor/dist/
+**/node_modules/
+
+# --- Flutter / Dart ---
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.pub-cache/
+frontend/.pub/
+**/*.iml
+**/.flutter-plugins*
+
+# --- Editor staged build outputs that are regenerated ---
+**/*.umd.js.map
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

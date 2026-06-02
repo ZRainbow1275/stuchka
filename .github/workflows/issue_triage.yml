@@ -1,0 +1,85 @@
+# Stučka Issues 机器化阻断咨询（spec 04-gplv3-readme-front.md §5.2 / §5.3 / §5.5）
+#
+# 新 Issue 打开 / 编辑时运行 tools/triage/keyword_matcher.py：
+#   命中（个案咨询 / 个人信息 / 教唆违规）-> 打 dispute-not-accepted 标签 + 张贴 §5.2 自动回复 + 关闭。
+#   未命中 -> 不动（交由模板自身的标签）。
+# §5.5 兜底：自动回复末行始终保留"申诉误判"入口；带 appeal 标签的申诉 Issue 永不被本流程关闭。
+name: Issue Triage (keyword block)
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    # 申诉误判通道永不被拦截关闭（§5.5 复议路径必须畅通）。
+    if: ${{ !contains(github.event.issue.labels.*.name, 'appeal') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run keyword matcher
+        id: match
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set +e
+          printf '%s' "$ISSUE_BODY" > /tmp/issue_body.txt
+          python tools/triage/keyword_matcher.py \
+            --title "$ISSUE_TITLE" \
+            --body-file /tmp/issue_body.txt \
+            --json > /tmp/triage_result.json
+          CODE=$?
+          set -e
+          echo "matcher_exit=$CODE" >> "$GITHUB_OUTPUT"
+          # exit 10 == blocked（命中阻断触发）。
+          if [ "$CODE" -eq 10 ]; then
+            echo "blocked=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "blocked=false" >> "$GITHUB_OUTPUT"
+          fi
+          cat /tmp/triage_result.json
+
+      - name: Apply label, post auto-reply, close (on block)
+        if: ${{ steps.match.outputs.blocked == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('/tmp/triage_result.json', 'utf8'));
+            const issue_number = context.payload.issue.number;
+            const { owner, repo } = context.repo;
+
+            // §5.3 dispute-not-accepted 标签。
+            await github.rest.issues.addLabels({
+              owner, repo, issue_number,
+              labels: [result.label || 'dispute-not-accepted'],
+            });
+
+            // §5.2 自动回复文案（含 §5.5 申诉误判入口，由匹配器逐字提供）。
+            await github.rest.issues.createComment({
+              owner, repo, issue_number,
+              body: result.auto_reply,
+            });
+
+            // 自动关闭（not planned）。申诉路径通过"申诉误判"模板另开 Issue 进行。
+            await github.rest.issues.update({
+              owner, repo, issue_number,
+              state: 'closed',
+              state_reason: 'not_planned',
+            });
+
+      - name: Log compliant pass-through
+        if: ${{ steps.match.outputs.blocked == 'false' }}
+        run: echo "Issue passed keyword triage (compliant); leaving as-is."

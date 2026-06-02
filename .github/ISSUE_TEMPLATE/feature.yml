@@ -1,0 +1,54 @@
+name: 功能建议 (Feature request)
+description: 为 Stučka 提议新功能或改进。请勿提交个案咨询或包含个人信息。
+title: "[feature] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 提交前请确认
+        本 Issues 区仅接受 bug 报告、功能建议、合规反馈与开源治理讨论，不接受个案法律咨询。
+        请勿填写手机号、身份证号、银行卡号、家庭住址等个人信息。
+        立场声明：本项目反 HR 立场为道德姿态，不接受"HR 模式"、"雇主版分支"类功能提案（参见 CONTRIBUTING.md）。
+  - type: checkboxes
+    id: precheck
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我确认本 Issue 不包含任何个人信息。
+          required: true
+        - label: 我确认本提案不属于"HR 模式 / 雇主版 / 绕过合规标识"类（此类提案一律 close）。
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 描述当前的痛点或缺口。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 你希望的功能或改进方式。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案（可选）
+      description: 你考虑过的其他做法。
+    validations:
+      required: false
+  - type: dropdown
+    id: audience
+    attributes:
+      label: 受益对象
+      description: 本功能主要服务于谁？
+      options:
+        - 劳动者（默认服务对象）
+        - 工会 / 法援工作者
+        - 开发者 / 自编译用户
+        - 其他（请在正文说明）
+    validations:
+      required: true

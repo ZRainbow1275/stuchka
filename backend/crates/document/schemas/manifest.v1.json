@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stuchka.example/schema/manifest/v1.json",
+  "title": "Stučka dossier manifest v1 (GB 45438-2025 Layer 4)",
+  "description": "Tamper-evidence manifest listing every AI-drafted segment + the four-layer completeness (compliance/01 §6.1). The Rust enforcement lives in crates/document/src/gb45438/manifest_validator.rs; this file is the offline `validate_manifest.py` contract.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id_hashed",
+    "documents",
+    "kb_frozen_hash",
+    "generator",
+    "gb45438_layer_completeness"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "case_id_hashed": { "type": "string", "pattern": "^[0-9a-fA-F]{32}$" },
+    "kb_frozen_hash": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+    "generator": {
+      "type": "object",
+      "required": ["name", "version", "license"],
+      "properties": {
+        "name": { "const": "Stučka" },
+        "version": { "type": "string" },
+        "license": { "const": "GPL-3.0-only" }
+      }
+    },
+    "gb45438_layer_completeness": {
+      "type": "object",
+      "required": [
+        "layer1_explicit",
+        "layer2_metadata",
+        "layer3_zerowidth",
+        "layer3_lsb",
+        "layer4_manifest"
+      ],
+      "properties": {
+        "layer1_explicit": { "type": "boolean" },
+        "layer2_metadata": { "type": "boolean" },
+        "layer3_zerowidth": { "type": "boolean" },
+        "layer3_lsb": { "type": "boolean" },
+        "layer4_manifest": { "type": "boolean" }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["doc_id", "filename", "ai_generated_segments"],
+        "properties": {
+          "doc_id": { "type": "string", "format": "uuid" },
+          "filename": { "type": "string", "minLength": 1 },
+          "ai_generated_segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "segment_id",
+                "doc_path",
+                "char_range",
+                "model_id",
+                "kb_hash",
+                "prompt_hash",
+                "confidence",
+                "review_state"
+              ],
+              "properties": {
+                "segment_id": { "type": "string", "pattern": "^0x[0-9a-fA-F]{16}$" },
+                "doc_path": { "type": "string", "minLength": 1 },
+                "char_range": {
+                  "type": "array",
+                  "items": { "type": "integer", "minimum": 0 },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "model_id": { "type": "string" },
+                "kb_hash": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+                "prompt_hash": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+                "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                "review_state": { "enum": ["approved", "edited", "rejected"] },
+                "reviewer_id": { "type": "string" },
+                "review_time": { "type": "string", "format": "date-time" },
+                "edit_diff_hash": { "type": "string", "pattern": "^[0-9a-fA-F]{32}$" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

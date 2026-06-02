@@ -1,0 +1,23 @@
+# Stučka · 当前法律责任主体
+#
+# 真实法律状态（非占位）：L0-01 法律责任主体尚未由个人切换到法人主体。
+# 当前由个人开发者维护，法律责任人格化，按 spec/compliance/03 §3 与
+# prd/05-non-functional.md §5.3.5：法人主体设立前不发布公开二进制。
+#
+# 字段契约（spec/compliance/03 §5.3）：
+#   type            : individual | foundation | company
+#   name            : 主体名称；个人主体下为维护者署名（可用化名）。
+#   registration_id : 法人登记号；个人主体下为 null。
+#   jurisdiction    : 注册法域；个人主体下为 null。
+#   confirmed       : 法人主体是否已确认设立。个人主体阶段为 false，
+#                     守门脚本据此阻断公开二进制发布。
+#   contact_email   : 投诉申诉邮箱（README 第三行与 ISSUE_TEMPLATE 引用）。
+#   emergency_mirror_contact : 紧急下架预案的备用镜像联系方式。
+
+type: individual
+name: Stučka 维护者（个人）
+registration_id: null
+jurisdiction: null
+confirmed: false
+contact_email: stuchka-legal@protonmail.com
+emergency_mirror_contact: stuchka-legal@protonmail.com

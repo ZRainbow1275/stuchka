@@ -1,0 +1,38 @@
+region_code: "15"
+region_name_zh: "内蒙古自治区"
+deep_coverage: false
+data_version: "2025-11-01"
+law_refs:
+  - urn: "law:中华人民共和国劳动合同法/v2012-12-28/§47"
+    title: "中华人民共和国劳动合同法"
+    effective_at: "2012-12-28"
+
+wage:
+  region_min_wage_monthly:
+    - {city_code: "150100", city_name_zh: "呼和浩特", value: 2270, effective_at: "2024-01-01"}
+  avg_monthly_wage_prev_year: 7173
+  cap_multiplier_for_severance: 3
+
+overtime:
+  hourly_divisor: 21.75
+  weekday_rate: 1.5
+  weekend_rate: 2.0
+  holiday_rate: 3.0
+  monthly_cap_hours: 36
+
+injury:
+  # 做能用（make-usable）：一次性伤残补助金月数全国统一（工伤保险条例 §35~§37）。
+  # 医疗 / 就业补助月数依地方规定，本省未做深，引导咨询当地法援，不臆造数值。
+  lump_sum_months_by_grade: [27, 25, 23, 21, 18, 16, 13, 11, 9, 7]
+  medical_subsidy_months_by_grade: []
+  employment_subsidy_months_by_grade: []
+
+deadline:
+  arbitration_general_years: 1
+  arbitration_wage_special: "during_labor_relationship_and_one_year_after"
+  inspection_years: 2
+  enforcement_years: 2
+  injury_recognition_years: 1
+  appeal_days: 15
+
+abstention_zones: []

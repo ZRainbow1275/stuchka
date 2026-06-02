@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+# Secrets — NEVER commit (SiliconFlow key etc.)
+/config/secrets.toml
+.env
+.env.local
+# Local DB artifacts
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+audit.sqlite*

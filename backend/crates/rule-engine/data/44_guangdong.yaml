@@ -1,0 +1,48 @@
+region_code: "44"
+region_name_zh: "广东省"
+deep_coverage: true
+data_version: "2025-11-01"
+law_refs:
+  - urn: "law:广东省工资支付条例/v2016-09-29/§54"
+    title: "广东省工资支付条例"
+    effective_at: "2016-09-29"
+  - urn: "law:广东省工伤保险条例/v2021-01-01/§35"
+    title: "广东省工伤保险条例"
+    effective_at: "2021-01-01"
+
+wage:
+  region_min_wage_monthly:
+    - {city_code: "440100", city_name_zh: "广州", value: 2300, effective_at: "2024-12-01"}
+    - {city_code: "440300", city_name_zh: "深圳", value: 2360, effective_at: "2024-07-01"}
+    - {city_code: "440600", city_name_zh: "佛山", value: 1900, effective_at: "2024-12-01"}
+    - {city_code: "441900", city_name_zh: "东莞", value: 1900, effective_at: "2024-12-01"}
+  avg_monthly_wage_prev_year: 10923
+  cap_multiplier_for_severance: 3
+
+overtime:
+  hourly_divisor: 21.75
+  weekday_rate: 1.5
+  weekend_rate: 2.0
+  holiday_rate: 3.0
+  monthly_cap_hours: 36
+
+injury:
+  # 一次性伤残补助金月数（工伤保险条例 §35~§37，全国统一）
+  lump_sum_months_by_grade: [27, 25, 23, 21, 18, 16, 13, 11, 9, 7]
+  # 一次性工伤医疗补助金月数（广东省工伤保险条例，按统筹地区上年职工月平均工资）
+  medical_subsidy_months_by_grade: [0, 0, 0, 0, 6, 6, 4, 3, 2, 1]
+  # 一次性伤残就业补助金月数（广东省工伤保险条例）
+  employment_subsidy_months_by_grade: [0, 0, 0, 0, 50, 40, 25, 15, 5, 3]
+
+deadline:
+  arbitration_general_years: 1
+  arbitration_wage_special: "during_labor_relationship_and_one_year_after"
+  inspection_years: 2
+  enforcement_years: 2
+  injury_recognition_years: 1
+  injury_assessment_days: 60
+  appeal_days: 15
+
+abstention_zones:
+  - keyword: "灵活就业 平台用工 个人合伙人 协议"
+    reason: "广东省对平台用工新业态认定存在地方个案波动，进入 boundary 区"

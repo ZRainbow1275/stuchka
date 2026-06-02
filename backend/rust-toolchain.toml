@@ -1,0 +1,6 @@
+# Local dev uses installed stable (1.94, compatible with MSRV 1.84).
+# MSRV floor is declared via workspace.package.rust-version = "1.84"; CI pins 1.84 to verify MSRV.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+targets = ["x86_64-pc-windows-msvc"]

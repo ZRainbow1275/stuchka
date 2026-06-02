@@ -1,0 +1,83 @@
+name: stuchka
+description: "Stučka 劳动纠纷智能体 · Flutter 桌面工作台外壳（通道 B IPC + 三栏工作台 + 无障碍底线）。"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0-200.1.beta
+  flutter: ">=3.40.0-0.0.pre"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # 状态管理（Riverpod 3 — Notifier API）
+  flutter_riverpod: ^3.3.1
+
+  # 路由（go_router 17 — state.pathParameters / state.uri.queryParameters）
+  go_router: ^17.2.3
+
+  # 唯一图标库 · Lucide line icons（零 Emoji / 零 Material Icons）
+  flutter_lucide: ^1.11.0
+
+  # 通道 B HTTP（Bearer 强制注入）
+  dio: ^5.9.2
+
+  # 通道 B Yjs WS（ws://127.0.0.1:<port>/ws/sync/:doc_id）
+  web_socket_channel: ^3.0.3
+
+  # 三栏可调宽工作台
+  multi_split_view: ^3.6.2
+
+  # 胜诉成本水平条形图（非饼图）
+  fl_chart: ^1.0.0
+
+  # 跟随系统深色护眼
+  dynamic_color: ^1.8.1
+
+  # 本地零外发日志
+  logger: ^2.7.0
+
+  # ISO 日期 / 金额格式化
+  intl: ^0.20.2
+
+  # 本地偏好（theme_mode / text_scale_factor / case_pane_ratio / 向导完成 / 上云记忆）
+  shared_preferences: ^2.5.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # 仅测试用：web_socket_channel 的底层抽象。S1 的 yjs_ws_provider_test 用其真实的
+  # AdapterWebSocketChannel 构造一个“连接挂起”的真实 WebSocketChannel（非 mock），
+  # 以便在不开真实 socket 的前提下断言 Authorization Bearer 头。
+  web_socket: ^1.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/tokens/
+    - assets/web/editor/
+
+  # 思源字体本地打包（SIL OFL，禁运行时联网拉取）。R1a 若字体资产缺位则回退系统字体，
+  # 故此段保持注释直到 assets/fonts/ 落齐对应 OTF，避免 pub 校验失败。
+  # fonts:
+  #   - family: SourceHanSans
+  #     fonts:
+  #       - asset: assets/fonts/SourceHanSansSC-Regular.otf
+  #       - asset: assets/fonts/SourceHanSansSC-Medium.otf
+  #         weight: 500
+  #       - asset: assets/fonts/SourceHanSansSC-Bold.otf
+  #         weight: 700
+  #   - family: SourceHanSerif
+  #     fonts:
+  #       - asset: assets/fonts/SourceHanSerifSC-Regular.otf
+  #       - asset: assets/fonts/SourceHanSerifSC-Bold.otf
+  #         weight: 700
+  #   - family: JetBrainsMonoSC
+  #     fonts:
+  #       - asset: assets/fonts/JetBrainsMono-Regular.ttf
