@@ -10,6 +10,7 @@ import '../../../theme/stuchka_theme.dart';
 import '../../accessibility/crisis/crisis_banners.dart';
 import '../../accessibility/crisis/crisis_detector.dart';
 import '../../accessibility/crisis/crisis_level3_dialog.dart';
+import '../../accessibility/crisis/emotion_trend.dart';
 import 'degrade.dart';
 
 /// One AI message (with its mandatory source chip).
@@ -35,9 +36,22 @@ class AiAssistantPanel extends ConsumerStatefulWidget {
 class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
   final _input = TextEditingController();
   final _detector = const CrisisDetector();
+  // M11 历史会话情绪: in-memory, session-scoped trend so support is history-aware (never persisted).
+  final _trend = EmotionTrend();
   final List<AiMessage> _messages = [];
   CrisisLevel _crisis = CrisisLevel.none;
+  /// The user dismissed the gentle support banner; a fresh concerning turn un-dismisses it.
+  bool _supportDismissed = false;
   bool _busy = false;
+
+  /// Show the gentle Level-1 support banner when the latest turn reads as light concern OR the
+  /// session shows a SUSTAINED pattern of concern (M11) — unless the user has dismissed it and no
+  /// new concern has since arrived. Severe/mid turns route to their own dialogs, not this banner.
+  bool get _showSupportBanner =>
+      !_supportDismissed &&
+      _crisis != CrisisLevel.severe &&
+      _crisis != CrisisLevel.mid &&
+      (_crisis == CrisisLevel.light || _trend.sustainedConcern);
 
   @override
   void dispose() {
@@ -49,7 +63,12 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     final text = _input.text.trim();
     if (text.isEmpty) return;
     final lvl = _detector.scan(text);
-    setState(() => _crisis = lvl);
+    _trend.record(lvl, DateTime.now());
+    setState(() {
+      _crisis = lvl;
+      // A fresh concerning turn revives the gentle support even if it was dismissed earlier.
+      if (lvl != CrisisLevel.none) _supportDismissed = false;
+    });
     // INV-07 三级响应 (compliance/05 §4.2 / §9.2): severe -> Level-3 (24h cooldown + appeal);
     // mid -> Level-2 soft reminder. Severe is NOT treated as mid.
     if (lvl == CrisisLevel.severe) {
@@ -85,8 +104,8 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     return Column(
       children: [
         AiDegradeBanner(level: widget.degradeLevel, affectedModuleCount: widget.degradeLevel.index),
-        if (_crisis == CrisisLevel.light)
-          CrisisLevel1Banner(onDismiss: () => setState(() => _crisis = CrisisLevel.none)),
+        if (_showSupportBanner)
+          CrisisLevel1Banner(onDismiss: () => setState(() => _supportDismissed = true)),
         Expanded(
           child: _messages.isEmpty
               ? const Center(child: Text('向 AI 提问 · 每条回答都会标注来源'))
