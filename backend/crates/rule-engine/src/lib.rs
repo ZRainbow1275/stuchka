@@ -23,6 +23,10 @@ pub use diagnosis::{
     DiagnosisNextAction, DiagnosisOutput, DiagnosisResult, Procedure, Question, RecommendedProcedures,
     Step as DiagnosisStep,
 };
+pub use deadline::performance::{
+    evaluate as evaluate_performance, InstallmentAssessment, InstallmentState, InstrumentKind,
+    PerformanceFacts, PerformanceInstallment, PerformanceStatus,
+};
 pub use deadline::{DeadlineFacts, DeadlineKind};
 pub use error::RuleError;
 pub use evidence_score::{score as score_evidence, EvidenceScoreInputs, ScoreBreakdown};

@@ -13,6 +13,7 @@
 pub mod config;
 pub mod decision;
 pub mod error;
+pub mod gazetteer;
 pub mod luhn;
 pub mod mask;
 pub mod ner_layer;
@@ -133,16 +134,21 @@ mod tests {
     }
 
     #[test]
-    fn a13_try_new_missing_weights_downgrades() {
+    fn a13_try_new_enabled_uses_real_gazetteer() {
+        // R1b: enabling NER loads the REAL gazetteer backend even when no candle weight exists
+        // (a missing candle weight downgrades candle → gazetteer, NOT → None).
         let cfg = HsdConfig {
             enable_ner_layer: true,
             ner_model_path: Some(std::path::PathBuf::from("/no/such/weights.safetensors")),
             ..HsdConfig::default()
         };
-        let det = HsdDetector::try_new(&cfg).expect("missing weights must downgrade, not error");
-        assert!(!det.has_ner());
-        // Strong signal still detected on the R1a path.
+        let det = HsdDetector::try_new(&cfg).expect("missing candle weight must not error");
+        assert!(det.has_ner(), "the gazetteer backend is active");
+        // Strong signal still detected, and the NER layer now adds a person name.
         assert!(det.scan("13800138000").is_high_sensitive);
+        let rep = det.scan("我同事张伟");
+        assert!(rep.hits.iter().any(|h| h.rule_id == "NER-PER"));
+        assert!(!rep.is_high_sensitive, "a lone person name is weak (INC-7)");
     }
 
     #[test]

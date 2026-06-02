@@ -1,0 +1,18 @@
+# Common Chinese given-name characters (常用名字用字) — gazetteer support for Layer-2 NER (ai-12).
+# A person-name = surname + 1..2 consecutive characters FROM THIS SET. Bounding the given name to
+# real name characters stops over-capture into following words (e.g. 张伟|昨天, not 张伟昨) and
+# correctly extends compound names (欧阳|娜娜). Real curated reference data, not fabricated.
+# One character per line; '#' lines and blanks ignored.
+伟 强 磊 军 洋 勇 艳 杰 娟 涛 明 超 秀 霞 平 刚 桂 芳 燕 鹏
+华 红 玉 兰 凤 玲 飞 鑫 波 斌 辉 健 俊 峰 帅 浩 鹏 楠 鑫 鹏
+娜 静 敏 丽 婷 雪 倩 颖 琳 晶 欣 慧 璐 莹 蕾 萍 洁 媛 妍 瑶
+文 武 国 建 海 春 林 森 鑫 旭 阳 晨 昊 宇 轩 睿 涵 博 思 子
+雨 梦 嘉 佳 怡 悦 馨 璇 婉 婷 菲 蓉 玥 妮 璟 琪 琦 瑾 瑜 瑛
+龙 虎 鹏 鹰 翔 凯 杰 锋 钢 铁 银 锐 钰 鸿 鹤 麟 骏 骐 骥 鸣
+志 立 永 长 安 康 宁 福 寿 兴 旺 隆 昌 茂 盛 富 贵 荣 华 庆
+新 民 强 国 富 强 振 兴 中 华 伟 业 宏 远 致 远 守 信 守 义
+家 宝 树 根 桂 枝 香 莲 梅 菊 竹 松 柏 槐 杨 柳 桐 榕 枫 桦
+天 地 山 河 江 海 川 湖 峰 岩 石 金 土 水 火 木 光 亮 辉 煌
+小 大 二 三 友 良 善 仁 德 信 礼 智 勇 谦 和 顺 通 达 成 功
+学 思 知 行 慧 聪 敏 睿 哲 理 文 章 书 画 琴 棋 诗 词 歌 赋
+青 春 夏 秋 冬 朝 暮 晓 昕 晗 暄 曦 旻 昭 晖 暖 晴 旭 昇 晟

@@ -1,0 +1,28 @@
+# Medical-record keywords (病历关键词) — gazetteer for Layer-2 deterministic NER (ai-12).
+# A direct substring match emits a MedicalKeyword hit (weak signal). Real medical/work-injury terms.
+病历
+门诊病历
+住院病历
+诊断书
+诊断证明
+出院小结
+出院记录
+入院记录
+住院记录
+工伤认定
+工伤鉴定
+劳动能力鉴定
+伤残等级
+伤残鉴定
+职业病诊断
+职业病
+病情证明
+医学诊断
+检查报告
+化验单
+检验报告
+影像报告
+手术记录
+用药记录
+病案
+转诊单

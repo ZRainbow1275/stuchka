@@ -12,11 +12,16 @@ pub mod injury_phases;
 pub mod inspection;
 pub mod interrupt;
 pub mod occupational_disease;
+pub mod performance;
 pub mod warning;
 
 pub use anchor::{DeadlineFacts, DeadlineKind};
 pub use buffer::DeadlineValue;
 pub use injury_phases::{InjuryPhase, InjuryPipeline, NextPhaseGate};
+pub use performance::{
+    InstallmentAssessment, InstallmentState, InstrumentKind, PerformanceFacts,
+    PerformanceInstallment, PerformanceStatus,
+};
 pub use interrupt::{
     effective_remaining, DeadlineState, InterruptCause, InterruptEvent, SuspendCause,
     SuspendInterval,

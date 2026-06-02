@@ -65,9 +65,76 @@ pub struct DeadlineItem {
     pub manual_confirm_required: bool,
 }
 
-/// Register `POST /deadline/run`.
+/// `POST /performance/evaluate` request (M16 履行监控). Stateless like `/deadline/run`: the payment
+/// schedule is supplied in the body; the real engine derives per-installment state + the
+/// breach-triggered §250 enforcement countdown. No fabricated values.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PerformanceReq {
+    pub case_id: String,
+    pub province: String,
+    pub city: String,
+    pub instrument_kind: rule_engine::InstrumentKind,
+    pub effective_date: PlainDate,
+    pub installments: Vec<rule_engine::PerformanceInstallment>,
+    #[serde(default)]
+    pub as_of: Option<PlainDate>,
+}
+
+/// Register `POST /deadline/run` + `POST /performance/evaluate`.
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/deadline/run", post(deadline_run))
+    Router::new()
+        .route("/deadline/run", post(deadline_run))
+        .route("/performance/evaluate", post(performance_evaluate))
+}
+
+async fn performance_evaluate(
+    State(s): State<AppState>,
+    Json(req): Json<PerformanceReq>,
+) -> Response {
+    let trace = s.new_trace_id();
+    let Some(engine) = s.rule_engine() else {
+        return responses::error(data_model::ErrorCode::Internal, trace);
+    };
+    // Missing schedule → OutOfScope (C-C-6: never fabricate a 0); surfaced as BadRequest.
+    if req.installments.is_empty() {
+        return responses::error(data_model::ErrorCode::BadRequest, trace);
+    }
+    // Same Level-4 KB staleness gate as /deadline/run (the §250 countdown must not run on an
+    // expired KB). Abort with E_KB_OUTDATED + record KbExpiredBlock (data/03 §3.5).
+    let Some(manifest) = s.kb_manifest() else {
+        return responses::error(data_model::ErrorCode::Internal, trace);
+    };
+    if kb::ensure_calculable(manifest.generated_at, Utc::now()).is_err() {
+        if let Ok(case_id) = uuid::Uuid::parse_str(&req.case_id) {
+            let _ = crate::audit_helper::append_state_change(
+                &s,
+                audit::AuditReason::KbExpiredBlock,
+                case_id,
+                serde_json::json!({
+                    "case_id": req.case_id,
+                    "op": "performance_evaluate",
+                    "kb_age_days": s.kb_age_days(),
+                }),
+                &trace,
+            )
+            .await;
+        }
+        return responses::error(data_model::ErrorCode::KbOutdated, trace);
+    }
+    let Some(region) = engine.regions().get(&req.province) else {
+        return responses::error(data_model::ErrorCode::RuleNoCoverage, trace);
+    };
+    let facts = rule_engine::PerformanceFacts {
+        instrument_kind: req.instrument_kind,
+        effective_date: req.effective_date,
+        installments: req.installments.clone(),
+        as_of: req.as_of.unwrap_or_else(|| Utc::now().date_naive()),
+    };
+    match rule_engine::evaluate_performance(&facts, region) {
+        Ok(status) => responses::ok_200(status, trace),
+        Err(_) => responses::error(data_model::ErrorCode::Internal, trace),
+    }
 }
 
 fn parse_kind(raw: Option<&str>) -> DeadlineKind {

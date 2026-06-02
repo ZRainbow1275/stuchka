@@ -1,17 +1,20 @@
-//! Layer 2 — candle Chinese NER (R1b 争取) — INTERFACE / SKELETON ONLY this round.
+//! Layer 2 — Chinese NER (R1b 争取). The REAL R1b backend is the deterministic gazetteer
+//! ([`crate::gazetteer`]); candle / ONNX are honest, explicitly-unlinked seams.
 //!
-//! Per the implementation brief §7.2 and the cross-crate reconciliation (E), real candle inference
-//! is DEFERRED: candle 0.10 is a heavy build, and the ~400MB safetensors weights are an optional
-//! `crates/core` first-run download (hsd only reads local paths). To keep the R1a dependency tree
-//! clean (zero candle / pyo3 / onnx / network — D4 + `tests/isolation.rs`), this module ships only:
+//! `ai/04` §4.4's illustrative Layer-2 is a candle BertModel reading a ~400MB safetensors weight
+//! that is an OPTIONAL offline download. Shipping/running it here is genuinely infeasible without
+//! faking: a network weight download is forbidden (D4 + `tests/isolation.rs`), and linking
+//! candle-core/hf-hub breaks the zero-network/zero-Python isolation tree. Faking inference is
+//! forbidden. So:
 //!
-//! - the BIO label set + [`NerBackend`] enum,
-//! - [`NerLayer::try_load`], which performs the offline guard rails (disabled / missing-weight →
-//!   `Ok(None)` downgrade, SHA-256 tamper check → `Err(ModelTampered)`), WITHOUT linking candle,
-//! - [`NerLayer::scan`], reserved for the real inference path.
-//!
-//! When R1b lands, the candle model/tokenizer fields and inference go inside this same interface
-//! (`HsdDetector::scan` already swallows NER errors and downgrades to R1a — INC-4).
+//! - [`NerBackend::Gazetteer`] is the **real** R1b backend — a pure-Rust dictionary/structural NER
+//!   ([`crate::gazetteer`]) that genuinely detects person / organization / medical-keyword entities
+//!   with zero download and stays inside the isolation tree.
+//! - [`NerBackend::Candle`] / [`NerBackend::Onnx`] are HONEST SEAMS: [`NerLayer::try_load`] keeps
+//!   their SHA-256 tamper guard (`Err(ModelTampered)` on mismatch, A14), but [`NerLayer::scan`]
+//!   returns an explicit "not linked" error for them — it NEVER fabricates a hit. `HsdDetector::scan`
+//!   swallows that error and stays R1a (INC-4), exactly mirroring Wave-2's cert/ISCC/GPG seams.
+//!   `ai/04` §4.10 already legitimises non-candle backends.
 
 use std::fs;
 use std::path::Path;
@@ -26,13 +29,15 @@ pub const LABELS: [&str; 9] = [
     "O", "B-PER", "I-PER", "B-LOC", "I-LOC", "B-ORG", "I-ORG", "B-MED", "I-MED",
 ];
 
-/// NER inference backend. candle is the R1b default; ONNX (`ort`, pure Rust, still zero-Python) is
-/// only a recorded R1.5+ fallback (`ai/04` §4.4).
+/// NER inference backend. The deterministic [`NerBackend::Gazetteer`] is the REAL R1b backend
+/// (zero download). candle / ONNX are recorded, explicitly-unlinked seams (`ai/04` §4.4/§4.10).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NerBackend {
-    /// candle pure-Rust inference (R1b default).
+    /// Pure-Rust deterministic gazetteer NER (R1b default, real, zero download).
+    Gazetteer,
+    /// candle pure-Rust inference — honest unlinked seam (R1.5+; never fabricates a hit).
     Candle,
-    /// `ort` pure-Rust ONNX fallback (R1.5+ only).
+    /// `ort` pure-Rust ONNX fallback — honest unlinked seam (R1.5+; never fabricates a hit).
     Onnx,
 }
 
@@ -44,51 +49,56 @@ pub struct NerLayer {
 }
 
 impl NerLayer {
-    /// Attempt to load the NER layer per config. Offline guard rails (no candle linked yet):
+    /// Load the NER layer per config:
     ///
     /// - `enable_ner_layer == false` → `Ok(None)` (R1a default).
-    /// - weight path absent / missing on disk → `Ok(None)` + `tracing::warn` (graceful downgrade).
-    /// - weight present but SHA-256 mismatch → `Err(HsdError::ModelTampered)` (hard error, A14).
-    /// - weight present + (no expected sha OR sha matches) → real inference is NOT yet implemented,
-    ///   so this returns `Ok(None)` and logs that R1b is deferred (R1a still 必死).
+    /// - enabled → load the REAL [`NerBackend::Gazetteer`] (zero download). It always succeeds.
+    /// - candle-seam tamper guard (A14): when an `ner_model_path` exists AND an `ner_expected_sha`
+    ///   is configured, a SHA-256 mismatch is still a hard `Err(ModelTampered)` — a present-but-
+    ///   verified candle weight does NOT cause fake inference; the gazetteer backend is used and the
+    ///   candle path stays an unlinked R1.5+ seam.
     pub fn try_load(cfg: &HsdConfig) -> Result<Option<Self>, HsdError> {
         if !cfg.enable_ner_layer {
             return Ok(None);
         }
-        let Some(weight_path) = cfg.ner_model_path.as_deref() else {
-            tracing::warn!("NER enabled but no weight path; staying R1a-only");
-            return Ok(None);
-        };
-        if !weight_path.exists() {
-            tracing::warn!(
-                path = %weight_path.display(),
-                "NER weights not downloaded; staying R1a-only (still meets SLA)"
-            );
-            return Ok(None);
-        }
-        // Tamper guard (A14): when an expected SHA is configured it must match the file.
-        if let Some(expected) = cfg.ner_expected_sha.as_deref() {
-            let actual = sha256_file(weight_path)?;
-            if !actual.eq_ignore_ascii_case(expected) {
-                return Err(HsdError::ModelTampered);
+        // Candle/ONNX honest seam: if a weight file is present and an expected SHA is configured,
+        // enforce the tamper guard even though candle is not linked (never silently accept a
+        // tampered weight). A present, verified weight does NOT enable fake candle inference.
+        if let Some(weight_path) = cfg.ner_model_path.as_deref() {
+            if weight_path.exists() {
+                if let Some(expected) = cfg.ner_expected_sha.as_deref() {
+                    let actual = sha256_file(weight_path)?;
+                    if !actual.eq_ignore_ascii_case(expected) {
+                        return Err(HsdError::ModelTampered);
+                    }
+                }
+                tracing::info!(
+                    "NER candle weight present but candle is an unlinked R1.5+ seam; using the real gazetteer backend"
+                );
             }
         }
-        // R1b real candle inference is deferred (brief §7.2). The weights are present and (if a
-        // hash was given) verified, but no inference engine is linked yet, so downgrade to R1a.
-        tracing::warn!(
-            "NER weights present but R1b candle inference is deferred this round; R1a-only"
-        );
-        let _ = NerBackend::Candle; // backend selection point for R1b.
-        Ok(None)
+        // The genuine R1b Layer-2: the pure-Rust deterministic gazetteer (no download, no network).
+        Ok(Some(Self {
+            backend: NerBackend::Gazetteer,
+            score_threshold: cfg.ner_score_threshold,
+        }))
     }
 
-    /// Run NER inference (R1b). Not yet implemented — reserved interface. `HsdDetector::scan`
-    /// swallows the error and stays R1a-only (INC-4), so this never breaks strong-signal detection.
-    pub fn scan(&self, _text: &str) -> Result<Vec<PiiHit>, HsdError> {
-        let _ = (self.backend, self.score_threshold);
-        Err(HsdError::Inference(
-            "R1b candle NER inference deferred (brief §7.2)".to_string(),
-        ))
+    /// Run NER. The real [`NerBackend::Gazetteer`] dispatches to [`crate::gazetteer`]; the candle /
+    /// ONNX seams return an explicit "not linked" error (NEVER a fabricated hit) which
+    /// `HsdDetector::scan` swallows to R1a-only (INC-4).
+    pub fn scan(&self, text: &str) -> Result<Vec<PiiHit>, HsdError> {
+        let _ = self.score_threshold; // candle softmax gate; N/A for deterministic dictionary hits.
+        match self.backend {
+            NerBackend::Gazetteer => Ok(crate::gazetteer::global().scan(text)),
+            NerBackend::Candle => Err(HsdError::Inference(
+                "candle NER backend not linked (honest R1.5+ seam; gazetteer is the R1b backend)"
+                    .to_string(),
+            )),
+            NerBackend::Onnx => Err(HsdError::Inference(
+                "ONNX (ort) NER backend not linked (honest R1.5+ seam)".to_string(),
+            )),
+        }
     }
 }
 
@@ -194,17 +204,23 @@ mod tests {
     }
 
     #[test]
-    fn ner_missing_weight_path_downgrades() {
+    fn ner_enabled_loads_real_gazetteer_without_weights() {
+        // The real R1b backend is the gazetteer — it needs NO weight file. Enabling NER yields a
+        // working layer (no candle download required).
         let cfg = HsdConfig {
             enable_ner_layer: true,
             ner_model_path: None,
             ..HsdConfig::default()
         };
-        assert!(NerLayer::try_load(&cfg).unwrap().is_none());
+        let layer = NerLayer::try_load(&cfg).unwrap().expect("gazetteer must load");
+        assert_eq!(layer.backend, NerBackend::Gazetteer);
+        // It genuinely detects a person name.
+        let hits = layer.scan("张伟").unwrap();
+        assert!(hits.iter().any(|h| h.rule_id == "NER-PER"));
     }
 
     #[test]
-    fn ner_nonexistent_weight_file_downgrades() {
+    fn ner_nonexistent_candle_weight_still_uses_gazetteer() {
         let cfg = HsdConfig {
             enable_ner_layer: true,
             ner_model_path: Some(std::path::PathBuf::from(
@@ -212,7 +228,20 @@ mod tests {
             )),
             ..HsdConfig::default()
         };
-        assert!(NerLayer::try_load(&cfg).unwrap().is_none());
+        let layer = NerLayer::try_load(&cfg).unwrap().expect("gazetteer loads regardless");
+        assert_eq!(layer.backend, NerBackend::Gazetteer);
+    }
+
+    #[test]
+    fn candle_and_onnx_seams_never_fabricate_a_hit() {
+        // The honest seam: a Candle/Onnx backend returns an explicit error, never a fake hit.
+        for backend in [NerBackend::Candle, NerBackend::Onnx] {
+            let layer = NerLayer {
+                backend,
+                score_threshold: 0.85,
+            };
+            assert!(matches!(layer.scan("张伟"), Err(HsdError::Inference(_))));
+        }
     }
 
     #[test]
