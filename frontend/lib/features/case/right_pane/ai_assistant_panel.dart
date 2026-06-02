@@ -9,6 +9,7 @@ import '../../../theme/stuchka_icons.dart';
 import '../../../theme/stuchka_theme.dart';
 import '../../accessibility/crisis/crisis_banners.dart';
 import '../../accessibility/crisis/crisis_detector.dart';
+import '../../accessibility/crisis/crisis_level3_dialog.dart';
 import 'degrade.dart';
 
 /// One AI message (with its mandatory source chip).
@@ -49,7 +50,11 @@ class _AiAssistantPanelState extends ConsumerState<AiAssistantPanel> {
     if (text.isEmpty) return;
     final lvl = _detector.scan(text);
     setState(() => _crisis = lvl);
-    if (lvl == CrisisLevel.mid || lvl == CrisisLevel.severe) {
+    // INV-07 三级响应 (compliance/05 §4.2 / §9.2): severe -> Level-3 (24h cooldown + appeal);
+    // mid -> Level-2 soft reminder. Severe is NOT treated as mid.
+    if (lvl == CrisisLevel.severe) {
+      await CrisisLevel3Dialog.show(context, ref);
+    } else if (lvl == CrisisLevel.mid) {
       await CrisisLevel2Dialog.show(context);
     }
     setState(() => _busy = true);

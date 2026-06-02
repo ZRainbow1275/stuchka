@@ -18,6 +18,9 @@ target/
 **/*.sqlite-wal
 **/*.sqlite-shm
 audit.sqlite*
+# Runtime evidence/export artifacts produced by api e2e runs (NOT source).
+# Keep crates/rule-engine/data (diagnosis trees = source); only exclude api runtime data.
+backend/crates/api/data/
 
 # --- Node / editor build ---
 editor/node_modules/

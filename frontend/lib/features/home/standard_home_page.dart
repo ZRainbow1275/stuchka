@@ -24,6 +24,11 @@ class StandardHomePage extends ConsumerWidget {
         title: const Text('Stučka · 劳动纠纷工作台'),
         actions: [
           IconButton(
+            tooltip: '农民工欠薪向导',
+            icon: const Icon(StuchkaIcons.procedure),
+            onPressed: () => context.go('/scenario/migrant-wage/identity'),
+          ),
+          IconButton(
             tooltip: '字号 +',
             icon: const Icon(StuchkaIcons.zoomIn),
             onPressed: () =>
@@ -58,7 +63,20 @@ class StandardHomePage extends ConsumerWidget {
         error: (e, _) => _ErrorPanel(message: '$e', onRetry: () => ref.invalidate(caseListProvider)),
         data: (list) {
           if (list.isEmpty) {
-            return const Center(child: Text('尚无案件 · 点击右下角开始诊断'));
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('尚无案件 · 点击右下角开始诊断'),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    icon: const Icon(StuchkaIcons.procedure, size: 16),
+                    label: const Text('农民工欠薪向导（主用户路径）'),
+                    onPressed: () => context.go('/scenario/migrant-wage/identity'),
+                  ),
+                ],
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),

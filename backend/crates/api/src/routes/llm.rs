@@ -7,11 +7,12 @@
 //! probes the real SiliconFlow provider health endpoint. No stubs.
 
 use ai_dispatcher::wiring::{HsdAdapter, KbAdapter, RuleAdapter};
-use ai_dispatcher::{Provider, UserQuery};
+use ai_dispatcher::{Provider, RoutingAuditSink, RoutingGuardCtx, UserQuery};
 use axum::{extract::State, response::Response, routing::post, Json, Router};
 use data_model::{CoverageTag, SourceTag};
 use serde::{Deserialize, Serialize};
 
+use crate::routing_audit_sink::AuditLogRoutingSink;
 use crate::{responses, state::AppState};
 
 /// Structured query context (backend/01 §1.10 `LlmContext`). Replaces the prior free
@@ -127,17 +128,56 @@ async fn llm_query(State(s): State<AppState>, Json(req): Json<LlmQueryReq>) -> R
     };
     let rule_ctx = RuleAdapter { engine };
 
+    // §4.5 forced-local scene: a high-sensitivity case subtype (medical leave / three-periods /
+    // minor / sexual harassment / work-injury appraisal / criminal report) forces local routing
+    // regardless of the user's channel choice (INV-05) — derived from the structured context hint,
+    // never overridable by the request body.
+    let scene_forced_local = forced_local_scene(req.context.dispute_subtype.as_deref());
+
     let query = UserQuery {
         text: req.prompt.clone(),
         case_id: req.case_id.clone(),
         force_local: req.force_local,
         allow_cross_border: req.allow_cross_border,
+        // R1a `/llm/query` carries free text + context hints, not a named structured-field payload;
+        // the data-export guard grades the empty set conservatively as L2 and relies on the live
+        // hsd layer (Stage A) to catch incidental PII (which then drives R2 force-local). The seam
+        // is wired so a future structured-field channel feeds this directly (compliance/02 §3.1).
+        structured_fields: Vec::new(),
+        scene_forced_local,
     };
 
+    // The LIVE data-export-guard audit sink (compliance/02 §6, INV-06): EVERY routing decision the
+    // guard makes on this dispatch is written into the independent audit.sqlite chain. Present only
+    // when the chain verified clean on startup — a broken chain must not be extended (D3); the guard
+    // still runs and honours its local/cloud verdict either way (an audit gap never routes around it).
+    let routing_sink = match (s.audit_chain_ok(), s.audit()) {
+        (true, Some(audit)) => Some(AuditLogRoutingSink::new(audit.clone())),
+        _ => None,
+    };
+    let audit_sink: Option<&dyn RoutingAuditSink> =
+        routing_sink.as_ref().map(|s| s as &dyn RoutingAuditSink);
+
+    // `overseas_enabled` mirrors the per-request cross-border consent: an overseas route (R5) needs
+    // BOTH the channel enabled AND chosen, so without consent the guard can never select overseas.
+    let overseas_enabled = req.allow_cross_border;
+
     // The api layer does not derive a determinate rule intent from free text in R1a; Stage D is fed
-    // None (AI answers directly, abstention-first still capping confidence when uncertain).
+    // None (AI answers directly, abstention-first still capping confidence when uncertain). The
+    // data-export-guard inputs (compliance/02 §3.1 `overseas_enabled` + §6 INV-06 audit sink) are
+    // bundled into the `RoutingGuardCtx` so EVERY decision runs the guard and is audited.
     let answer = dispatcher
-        .answer(&query, &hsd_ctx, &kb_ctx, &rule_ctx, None)
+        .answer(
+            &query,
+            &hsd_ctx,
+            &kb_ctx,
+            &rule_ctx,
+            None,
+            RoutingGuardCtx {
+                overseas_enabled,
+                audit: audit_sink,
+            },
+        )
         .await;
 
     // Map the dispatcher Answer onto the api response (INV-08 surfaced verbatim).
@@ -159,6 +199,35 @@ async fn llm_query(State(s): State<AppState>, Json(req): Json<LlmQueryReq>) -> R
         pii_blocked: answer.pii_blocked,
     };
     responses::ok_200(resp, trace)
+}
+
+/// Map a case `dispute_subtype` hint onto the §4.5 forced-local scene flag (`compliance/02` §4.5):
+/// medical leave / three-periods / minor / sexual harassment / work-injury appraisal material /
+/// criminal report (拒不支付劳动报酬罪). Matched on substrings so a richer subtype label (e.g.
+/// `"work_injury_appraisal"` or 中文 `"工伤鉴定"`) still trips the gate. The flag is the highest-
+/// priority guard input (R0) and overrides every user channel choice (INV-05).
+fn forced_local_scene(dispute_subtype: Option<&str>) -> bool {
+    const SCENE_MARKERS: &[&str] = &[
+        // English / snake_case subtype labels.
+        "medical_leave",
+        "three_period",
+        "minor",
+        "sexual_harassment",
+        "work_injury_appraisal",
+        "criminal_report",
+        // 中文 case-subtype labels (§4.5 verbatim cues).
+        "医疗期",
+        "三期",
+        "未成年",
+        "性骚扰",
+        "工伤鉴定",
+        "刑事报案",
+        "拒不支付劳动报酬",
+    ];
+    match dispute_subtype {
+        Some(s) => SCENE_MARKERS.iter().any(|m| s.contains(m)),
+        None => false,
+    }
 }
 
 async fn provider_test(State(s): State<AppState>) -> Response {

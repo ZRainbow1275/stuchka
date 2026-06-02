@@ -61,9 +61,13 @@ pub enum AuditReason {
     // 9. AI dispatcher fallback
     AiFallbackLevelChange,
 
-    // 10. High-sensitivity detector (crates/hsd)
+    // 10. High-sensitivity detector (crates/hsd) + data-export guard (crates/ai-dispatcher)
     HighSensitivityDetected,
     CloudRequestDoubleConfirm,
+    /// Every AI-dispatch routing decision the data-export guard makes (`compliance/02` §6, INV-06):
+    /// the who/when/why/what four-tuple carrying `input_max_grade` / `actual_route` /
+    /// `override_reason` / `desensitization_applied`. Written on EVERY decision, not just blocks.
+    AiRoutingDecision,
 
     // 11. Group cases (R1b)
     GroupCreate,
@@ -118,6 +122,7 @@ impl AuditReason {
             AuditReason::AiFallbackLevelChange => "ai_fallback_level_change",
             AuditReason::HighSensitivityDetected => "high_sensitivity_detected",
             AuditReason::CloudRequestDoubleConfirm => "cloud_request_double_confirm",
+            AuditReason::AiRoutingDecision => "ai_routing_decision",
             AuditReason::GroupCreate => "group_create",
             AuditReason::GroupContributorJoin => "group_contributor_join",
             AuditReason::GroupPatchExport => "group_patch_export",
@@ -177,8 +182,10 @@ impl AuditReason {
             // Three-way merge / group patch application
             DocumentMerged | GroupPatchImport => AuditCategory::MergeDecision,
 
-            // Crypto / high-sensitivity routing operations
-            HighSensitivityDetected | CloudRequestDoubleConfirm => AuditCategory::CryptoOp,
+            // Crypto / high-sensitivity routing operations (incl. the data-export guard verdict)
+            HighSensitivityDetected | CloudRequestDoubleConfirm | AiRoutingDecision => {
+                AuditCategory::CryptoOp
+            }
 
             // Export-class events (finalized document, exports, GB mark, criminal report export)
             DocumentFinalized
@@ -234,6 +241,7 @@ mod tests {
         AuditReason::AiFallbackLevelChange,
         AuditReason::HighSensitivityDetected,
         AuditReason::CloudRequestDoubleConfirm,
+        AuditReason::AiRoutingDecision,
         AuditReason::GroupCreate,
         AuditReason::GroupContributorJoin,
         AuditReason::GroupPatchExport,
@@ -246,7 +254,8 @@ mod tests {
 
     #[test]
     fn has_about_forty_variants() {
-        assert_eq!(ALL.len(), 43, "data/04 §4.4 enumerates 43 trigger points");
+        // 43 data/04 §4.4 trigger points + the data-export-guard routing decision (compliance/02 §6).
+        assert_eq!(ALL.len(), 44, "data/04 §4.4 + the ai_routing_decision trigger point");
     }
 
     #[test]

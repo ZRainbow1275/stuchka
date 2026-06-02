@@ -28,12 +28,26 @@ use crate::inv08_template::Inv08Templates;
 use crate::levels::DegradeLevel;
 use crate::local_qwen::LocalQwen;
 use crate::provider::{CompleteRequest, CompleteResponse, Provider, ProviderId};
-use crate::routing::{decide_route, RouteTarget};
+use crate::routing::{
+    decide_route, max_grade_of_fields, route as export_route, write_routing_audit, GuardRequest,
+    Route, RouteTarget, RoutingAuditSink,
+};
 
 /// Stage A — high-sensitivity detector context.
 pub trait HsdContext: Send + Sync {
     /// Scan text; returns `(route_hint, is_high_sensitive)`.
     fn scan(&self, text: &str) -> (RouteHint, bool);
+
+    /// Desensitise `text` for a domestic-cloud send (`compliance/02` §3.4): mask every detected PII
+    /// span and re-scan, returning `(masked_text, residual_pii)`. `residual_pii == true` means a
+    /// strong signal survived masking and the export guard MUST force local. The default reuses
+    /// [`HsdContext::scan`] semantics conservatively (no masking capability ⇒ if the text is high
+    /// sensitive it is treated as residual so a mock can never silently leak), but the real
+    /// [`crate::wiring::HsdAdapter`] overrides it with the genuine `routing::desensitize` pipeline.
+    fn desensitize(&self, text: &str) -> (String, bool) {
+        let (_, high) = self.scan(text);
+        (text.to_string(), high)
+    }
 }
 
 /// Stage B/C — knowledge base context.
@@ -53,6 +67,19 @@ pub trait KbContext: Send + Sync {
 pub trait RuleContext: Send + Sync {
     /// Resolve the query into a rule outcome (when the query carries a resolvable intent).
     fn try_resolve(&self, req: &RuleRequest) -> Option<RuleOutcome>;
+}
+
+/// The data-export-guard inputs the live dispatch must supply (`compliance/02` §3 / §6): the user's
+/// overseas-cloud settings flag and the routing-decision audit sink. Bundled into one parameter so
+/// [`crate::Dispatcher::answer`] stays within the argument budget while still threading BOTH the
+/// §3.1 `overseas_enabled` input and the §6 INV-06 audit sink onto the genuine dispatch.
+#[derive(Default)]
+pub struct RoutingGuardCtx<'a> {
+    /// Whether the user has enabled the overseas-cloud channel at all (settings; default false).
+    pub overseas_enabled: bool,
+    /// The routing-decision audit sink (`compliance/02` §6, INV-06). The live `Dispatcher` always
+    /// supplies a real sink so EVERY guard decision is written as the four-tuple `what`.
+    pub audit: Option<&'a dyn RoutingAuditSink>,
 }
 
 /// The dispatcher context handed to [`answer`] — bundles the stage contexts + the AI resources.
@@ -79,12 +106,19 @@ pub struct StageContext<'a> {
     pub templates: &'a Inv08Templates,
     /// Optional rule request to feed Stage D (derived from `UserQuery` at the call site).
     pub rule_request: Option<RuleRequest>,
+    /// Whether the user has enabled the overseas-cloud channel at all (settings; default false).
+    /// Feeds the data-export guard (`compliance/02` §3.1 `overseas_enabled`).
+    pub overseas_enabled: bool,
+    /// The routing-decision audit sink (`compliance/02` §6, INV-06). EVERY routing decision the
+    /// guard makes is written here as the four-tuple `what` — not just blocks. `None` only in unit
+    /// fixtures that assert non-audit behaviour; the live `Dispatcher` always supplies a real sink.
+    pub audit: Option<&'a dyn RoutingAuditSink>,
 }
 
 /// The A→F pipeline (ai/01 §1.5). Any stage hitting abstention returns immediately.
 pub async fn answer(req: &UserQuery, ctx: &StageContext<'_>) -> Answer {
     // --- Stage A: HSD pre-filter ---------------------------------------------------------------
-    let (route_hint, _is_high) = ctx.hsd.scan(&req.text);
+    let (route_hint, is_high) = ctx.hsd.scan(&req.text);
 
     // --- Stage B: KB increment + Level4 gate ---------------------------------------------------
     let _ = ctx.kb.pull_incremental_if_due().await; // best-effort
@@ -118,17 +152,69 @@ pub async fn answer(req: &UserQuery, ctx: &StageContext<'_>) -> Answer {
 
     let rule_coverage = rule_outcome.as_ref().map(|o| o.coverage_tag());
 
+    // --- INV-05 data-export guard (compliance/02 §3) -------------------------------------------
+    // EVERY dispatch passes through the export guard before any send (§3 性质: 未通过禁止发出).
+    // Compute the payload's highest sensitivity grade from the request's structured fields (§2.1),
+    // desensitise the free text for the domestic-cloud path (§3.4), then run the §3.1 routing
+    // matrix. The verdict (a) may force the route local (overriding the user's channel, INV-05),
+    // (b) tells us whether to send the MASKED payload to a domestic cloud, and (c) is ALWAYS
+    // audited as the §6 four-tuple — not just on a block.
+    let input_max_grade = max_grade_of_fields(req.structured_fields.iter().map(String::as_str));
+    let (masked_text, residual_pii) = ctx.hsd.desensitize(&req.text);
+    let guard_req = GuardRequest {
+        input_max_grade,
+        hsd_hit: is_high,
+        scene_forced_local: req.scene_forced_local,
+        overseas_enabled: ctx.overseas_enabled,
+        overseas_chosen: req.allow_cross_border,
+        desensitization_clean: !residual_pii,
+    };
+    let decision = export_route(&guard_req);
+
+    // Write the §6 audit four-tuple on EVERY decision (INV-06; §7 forbids omitting override_reason —
+    // write_routing_audit refuses an invariant-violating decision, so a non-compliant record can
+    // never reach the chain). The sink is best-effort here: an audit-write failure must not silently
+    // route around the guard, so we still honour the (already-computed) local/cloud verdict below.
+    if let Some(sink) = ctx.audit {
+        let kb_version = ctx.kb.version_label();
+        let case_id = req.case_id.as_deref().unwrap_or("");
+        let _ = write_routing_audit(
+            sink,
+            &decision,
+            case_id,
+            "", // why correlation id: api layer's trace id is threaded once the seam carries it
+            None,
+            &kb_version,
+        )
+        .await;
+    }
+
     // --- Stage E: AI inference (routed by level) -----------------------------------------------
+    // The guard forces local whenever its verdict is the local small steel cannon (R0/R1/R2/R3-
+    // residual). We feed that into the EXISTING force-local gate (decide_route) rather than
+    // bypassing it, so the HSD `RouteHint::ForceLocal` / no-local-model BlockedNoLocal handling is
+    // preserved (INV-05): a guard-forced-local request with no local model is still BLOCKED, never
+    // sent to any cloud.
+    let guard_force_local =
+        req.force_local || decision.actual_route == Route::LocalSmallSteelCannon;
     let route = decide_route(
         route_hint,
-        req.force_local,
+        guard_force_local,
         ctx.level,
         ctx.primary_id,
         ctx.secondary_id,
         ctx.local.is_some(),
     );
 
-    let complete_req = CompleteRequest::new(SYSTEM_PROMPT, &req.text);
+    // §3.4: the payload sent to a domestic cloud MUST be the desensitised text. The guard sets
+    // `desensitization_applied` exactly on the R3 domestic-cloud-after-mask path; on that path the
+    // residual-PII rescan was clean, so `masked_text` carries no surviving strong signal.
+    let outbound_user_text: &str = if decision.desensitization_applied && route.is_cloud_target() {
+        &masked_text
+    } else {
+        &req.text
+    };
+    let complete_req = CompleteRequest::new(SYSTEM_PROMPT, outbound_user_text);
 
     let ai: Result<Option<CompleteResponse>, DispatcherError> = match route {
         RouteTarget::Cloud(id) => {

@@ -9,6 +9,7 @@ use kb::{Bm25Index, KbVersion, LawSearch, SearchQuery};
 use rule_engine::{RuleEngine, RuleOutcome, RuleRequest};
 
 use crate::error::DispatcherError;
+use crate::routing::desensitize;
 use crate::stage::{HsdContext, KbContext, RuleContext};
 
 /// Adapts [`hsd::HsdDetector`] to [`HsdContext`].
@@ -21,6 +22,14 @@ impl HsdContext for HsdAdapter<'_> {
     fn scan(&self, text: &str) -> (RouteHint, bool) {
         let report = self.detector.scan(text);
         (report.route_hint, report.is_high_sensitive)
+    }
+
+    /// Real domestic-cloud desensitisation (`compliance/02` §3.4): runs the genuine
+    /// [`crate::routing::desensitize`] pipeline over the SAME detector, so the export guard masks
+    /// PII byte-exactly (`hsd::mask`) and re-scans for residuals on the LIVE path.
+    fn desensitize(&self, text: &str) -> (String, bool) {
+        let d = desensitize(self.detector, text);
+        (d.masked_text, d.residual_pii)
     }
 }
 

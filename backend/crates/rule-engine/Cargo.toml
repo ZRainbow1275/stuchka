@@ -20,3 +20,5 @@ tracing = "0.1"
 
 [dev-dependencies]
 serde_json = "1"
+# Integration tests build DiagnosisInput with the shared identity / subtype enums.
+data-model.workspace = true

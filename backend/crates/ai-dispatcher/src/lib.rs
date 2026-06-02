@@ -57,8 +57,11 @@ pub use provider::{
     ProviderRegistry, RateLimit, SwitchDecision, CN_PROVIDERS, OVERSEAS_PROVIDERS,
 };
 pub use providers::{DeepSeekProvider, GenericOpenAiProvider, QwenCloudProvider};
-pub use routing::{decide_route, RouteTarget};
-pub use stage::{answer, HsdContext, KbContext, RuleContext, StageContext};
+pub use routing::{
+    decide_route, write_routing_audit, Route, RouteTarget, RoutingAuditEntry, RoutingAuditSink,
+    RoutingDecision,
+};
+pub use stage::{answer, HsdContext, KbContext, RoutingGuardCtx, RuleContext, StageContext};
 
 /// Crate identity for boot diagnostics and CI dependency-graph assertions.
 pub const CRATE_NAME: &str = "ai-dispatcher";
@@ -108,6 +111,13 @@ impl Dispatcher {
 
     /// Run a query through the A→F pipeline against the live `hsd` / `kb` / `rule-engine` subsystems.
     /// `rule_request` is the caller-derived intent (None ⇒ Stage D is skipped, AI answers directly).
+    ///
+    /// `guard` carries the data-export-guard inputs ([`RoutingGuardCtx`]): the user's overseas-cloud
+    /// settings flag (`compliance/02` §3.1 `overseas_enabled`; default false) and the live
+    /// routing-decision audit sink (`compliance/02` §6, INV-06). On the LIVE path the api layer
+    /// ALWAYS supplies a real sink so EVERY data-export-guard decision is written as the four-tuple
+    /// `what` (not just blocks). Threading this through here is what makes the §3 export guard run on
+    /// the genuine dispatch — never dead code (未通过禁止发出).
     pub async fn answer(
         &self,
         query: &UserQuery,
@@ -115,6 +125,7 @@ impl Dispatcher {
         kb: &dyn KbContext,
         rules: &dyn RuleContext,
         rule_request: Option<rule_engine::RuleRequest>,
+        guard: RoutingGuardCtx<'_>,
     ) -> Answer {
         let ctx = StageContext {
             hsd,
@@ -128,6 +139,8 @@ impl Dispatcher {
             local: self.local.as_ref(),
             templates: &self.templates,
             rule_request,
+            overseas_enabled: guard.overseas_enabled,
+            audit: guard.audit,
         };
         stage::answer(query, &ctx).await
     }

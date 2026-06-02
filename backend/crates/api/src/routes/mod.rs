@@ -11,6 +11,7 @@ pub mod audit;
 pub mod case;
 pub mod compute;
 pub mod deadline;
+pub mod diagnose;
 pub mod document;
 pub mod evidence;
 pub mod fact;
@@ -28,6 +29,7 @@ use crate::state::AppState;
 pub fn all() -> Router<AppState> {
     Router::new()
         .merge(case::routes())
+        .merge(diagnose::routes())
         .merge(fact::routes())
         .merge(evidence::routes())
         .merge(document::routes())

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../theme/stuchka_icons.dart';
 import '../../../theme/stuchka_theme.dart';
+import '../crisis/cooldown_providers.dart';
+import '../crisis/crisis_level3_dialog.dart';
 import '../hotlines.dart';
 import 'countdown_button.dart';
 import 'disclaimer_payload.dart';
@@ -23,38 +25,53 @@ class HighRiskReadController extends Notifier<bool> {
   void setRead(bool v) => state = v;
 }
 
-/// INV-10 forced-disclaimer gate (spec 05 §5.7.1). The three engineering invariants:
-///   1. 8-second non-skippable cooldown (CountdownButton);
-///   2. non-collapsible full disclaimer;
-///   3. mandatory "我已完整阅读" checkbox before the confirm can enable.
-/// The default focus is the cancel ("返回") button (autofocus), never confirm.
+/// INV-10 forced-disclaimer gate (compliance/05 §2.2 / §5.1 / spec 05 §5.7.1). Invariants:
+///   1. an 8-second non-skippable read cooldown + a mandatory SECOND press behind a further 3s gate
+///      (CountdownButton — total flow >= 11s, compliance/05 §5.1);
+///   2. a non-collapsible, verbatim full disclaimer (>= 200 chars, compliance/05 §3);
+///   3. a mandatory "我已完整阅读" checkbox before the confirm can enable;
+///   4. the default focus is the cancel ("返回") button (autofocus), never confirm.
+///
+/// When the triggering user is under an INV-07 Level-3 24h cooldown (compliance/05 §5.2) the gate
+/// surfaces the misdetection-appeal card at the top and BLOCKS confirmation until released.
 class HighRiskGate extends ConsumerWidget {
   const HighRiskGate({
     super.key,
     required this.scenario,
     required this.onConfirmed,
+    this.payload = DisclaimerPayload.none,
   });
 
   final HighRiskScenario scenario;
-  final VoidCallback onConfirmed;
+  final DisclaimerPayload payload;
 
-  /// Show the gate as a modal dialog. Returns true iff the user confirmed.
-  static Future<bool> show(BuildContext context, HighRiskScenario scenario) async {
-    var confirmed = false;
+  /// Fired once on the SECOND confirm press, carrying the measured cooldown/flow timings
+  /// (compliance/05 §2.3 audit four-tuple `cooldown_actual_ms`).
+  final void Function(ConfirmTimings timings) onConfirmed;
+
+  /// Show the gate as a modal dialog. Returns the [ConfirmTimings] iff the user confirmed, else null.
+  static Future<ConfirmTimings?> show(
+    BuildContext context,
+    HighRiskScenario scenario, {
+    DisclaimerPayload payload = DisclaimerPayload.none,
+  }) async {
+    ConfirmTimings? result;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (_) => HighRiskGate(
         scenario: scenario,
-        onConfirmed: () => confirmed = true,
+        payload: payload,
+        onConfirmed: (t) => result = t,
       ),
     );
-    return confirmed;
+    return result;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final read = ref.watch(highRiskReadProvider(scenario));
+    final cooldown = ref.watch(cooldownProvider(kHighRiskFeature));
     final colors = StuchkaSemanticColors.of(context);
 
     return AlertDialog(
@@ -72,21 +89,33 @@ class HighRiskGate extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Non-collapsible full disclaimer.
+              // INV-07 Level-3 24h cooldown lock + misdetection appeal (compliance/05 §5.2 / §5.3).
+              if (cooldown.active) ...[
+                CooldownAppealCard(
+                  remaining: cooldown.remaining,
+                  onAppeal: () =>
+                      ref.read(appealProvider.notifier).submit(reason: 'misdetection'),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Non-collapsible verbatim full disclaimer (>= 200 chars).
               Text(
-                scenario.fullDisclaimer,
+                scenario.fullDisclaimer(payload),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              const _HotlinePanel(),
+              _HotlinePanel(scenario: scenario),
               const SizedBox(height: 16),
               CheckboxListTile(
                 value: read,
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 activeColor: colors.sealRed,
-                onChanged: (v) =>
-                    ref.read(highRiskReadProvider(scenario).notifier).setRead(v ?? false),
+                onChanged: cooldown.active
+                    ? null
+                    : (v) => ref
+                        .read(highRiskReadProvider(scenario).notifier)
+                        .setRead(v ?? false),
                 title: const Text('我已完整阅读上方免责声明'),
               ),
             ],
@@ -94,18 +123,21 @@ class HighRiskGate extends ConsumerWidget {
         ),
       ),
       actions: [
-        // Default focus = 返回 (cancel), per INV-10.
+        // Default focus = 返回 (cancel), per compliance/05 §5.1 强制焦点.
         TextButton(
           autofocus: true,
           onPressed: () => Navigator.pop(context),
           child: const Text('返回'),
         ),
+        // Confirm requires: checkbox read + 8s + a second press behind a 3s gate. Hard-blocked while
+        // a Level-3 cooldown is active (compliance/05 §5.2).
         CountdownButton(
           seconds: 8,
-          enabled: read,
+          secondPressGapSeconds: 3,
+          enabled: read && !cooldown.active,
           label: '我已知风险并确认',
-          onPressed: () {
-            onConfirmed();
+          onPressed: (timings) {
+            onConfirmed(timings);
             Navigator.pop(context);
           },
         ),
@@ -114,12 +146,15 @@ class HighRiskGate extends ConsumerWidget {
   }
 }
 
+/// The per-scenario hotline panel (compliance/05 §6: scoped subset of the shared resource list).
 class _HotlinePanel extends StatelessWidget {
-  const _HotlinePanel();
+  const _HotlinePanel({required this.scenario});
+  final HighRiskScenario scenario;
 
   @override
   Widget build(BuildContext context) {
     final colors = StuchkaSemanticColors.of(context);
+    final hotlines = LegalAidResources.forScenario(scenario);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -139,7 +174,7 @@ class _HotlinePanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          ...kLegalAidHotlines.map(
+          ...hotlines.map(
             (h) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Row(

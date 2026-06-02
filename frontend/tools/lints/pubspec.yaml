@@ -1,0 +1,11 @@
+name: stuchka_lints
+description: "Stučka custom_lint rules (spec 01 §1.8 防线1): avoid-hardcoded-colors + forbid-emoji-in-string-literal."
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0-200.1.beta
+
+dependencies:
+  analyzer: ^8.4.0
+  custom_lint_builder: ^0.8.1

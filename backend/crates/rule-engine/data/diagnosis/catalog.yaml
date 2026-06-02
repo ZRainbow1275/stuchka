@@ -1,0 +1,119 @@
+# M1 诊断子类目录 (prd/04 §4.1.2 + data/01 §1.7) — 85 子类的覆盖档位 / 法源 / 推荐程序。
+#
+# 每条:
+#   code            : LD-NN-NN (与 kb/assets/categories.yaml 一致)
+#   name_zh         : 子类中文名 (与 categories.yaml 一致)
+#   coverage_tier   : make_deep (做深) | make_usable (做能用)
+#   law_ref         : 主法源 URN (§0.5, D8). 用通用法律 URN; 子类级精确条款由 M9/M6 补足.
+#   procedures      : 推荐程序 主-并行-备用 (prd §4.1.2 recommended_procedures)
+#     main          : 主路径程序 (arbitration | litigation | inspection | mediation | recognition | appraisal | negotiation | criminal_report)
+#     parallel      : 并行程序 (可空)
+#     fallback      : 备用程序 (可空)
+#
+# R1 做深 5 大类: LD-01 / LD-02 / LD-03 / LD-05 / LD-09 (categories.yaml 头注)。
+subcategories:
+  # LD-01 劳动合同订立 (做深)
+  - { code: LD-01-01, name_zh: 未签订书面劳动合同二倍工资, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§82", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-01-02, name_zh: 试用期约定违法, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§19", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-01-03, name_zh: 合同条款无效或显失公平, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§26", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-01-04, name_zh: 入职欺诈与背景虚假, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§26", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-01-05, name_zh: 服务期与培训费用约定争议, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§22", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-02 解除与终止 (做深)
+  - { code: LD-02-01, name_zh: 违法解除劳动合同, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§87", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-02-02, name_zh: 经济性裁员, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§41", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-02-03, name_zh: 协商解除经济补偿, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§36", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-02-04, name_zh: 劳动者单方解除经济补偿, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§38", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-02-05, name_zh: 合同到期终止补偿, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§46", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-02-06, name_zh: 严重违纪解除合法性, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§39", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-03 工资报酬 (做深)
+  - { code: LD-03-01, name_zh: 拖欠工资, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§50", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-03-02, name_zh: 克扣工资, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§50", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-03-03, name_zh: 最低工资标准争议, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§48", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-03-04, name_zh: 提成奖金计算争议, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§50", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-03-05, name_zh: 恶意欠薪加付赔偿金, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§85", procedures: { main: inspection, parallel: [arbitration], fallback: criminal_report } }
+  - { code: LD-03-06, name_zh: 工资支付凭证与举证, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§50", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-04 社会保险 (做能用)
+  - { code: LD-04-01, name_zh: 弃缴约定无效与单方解除, coverage_tier: make_usable, law_ref: "law:中华人民共和国社会保险法/v2018-12-29/§4", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-04-02, name_zh: 未缴或欠缴社会保险, coverage_tier: make_usable, law_ref: "law:中华人民共和国社会保险法/v2018-12-29/§63", procedures: { main: inspection, parallel: [], fallback: arbitration } }
+  - { code: LD-04-03, name_zh: 低缴漏缴社保基数争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国社会保险法/v2018-12-29/§60", procedures: { main: inspection, parallel: [], fallback: arbitration } }
+  - { code: LD-04-04, name_zh: 未参保导致工伤损失, coverage_tier: make_usable, law_ref: "law:工伤保险条例/v2010-12-20/§62", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-04-05, name_zh: 社保转移接续争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国社会保险法/v2018-12-29/§19", procedures: { main: inspection, parallel: [], fallback: litigation } }
+  # LD-05 工伤与职业病 (做深)
+  - { code: LD-05-01, name_zh: 工伤认定争议, coverage_tier: make_deep, law_ref: "law:工伤保险条例/v2010-12-20/§14", procedures: { main: recognition, parallel: [], fallback: litigation } }
+  - { code: LD-05-02, name_zh: 劳动能力鉴定与伤残等级, coverage_tier: make_deep, law_ref: "law:工伤保险条例/v2010-12-20/§22", procedures: { main: appraisal, parallel: [], fallback: arbitration } }
+  - { code: LD-05-03, name_zh: 工伤医疗费与停工留薪, coverage_tier: make_deep, law_ref: "law:工伤保险条例/v2010-12-20/§33", procedures: { main: arbitration, parallel: [recognition], fallback: litigation } }
+  - { code: LD-05-04, name_zh: 一次性伤残就业补助金, coverage_tier: make_deep, law_ref: "law:工伤保险条例/v2010-12-20/§37", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-05-05, name_zh: 工亡待遇与供养亲属抚恤, coverage_tier: make_deep, law_ref: "law:工伤保险条例/v2010-12-20/§39", procedures: { main: recognition, parallel: [arbitration], fallback: litigation } }
+  - { code: LD-05-06, name_zh: 职业病诊断与赔偿, coverage_tier: make_deep, law_ref: "law:中华人民共和国职业病防治法/v2018-12-29/§44", procedures: { main: appraisal, parallel: [recognition], fallback: arbitration } }
+  # LD-06 竞业限制 (做能用)
+  - { code: LD-06-01, name_zh: 竞业限制补偿金, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§23", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-06-02, name_zh: 违反竞业限制违约金, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§23", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-06-03, name_zh: 商业秘密侵权, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§23", procedures: { main: litigation, parallel: [], fallback: arbitration } }
+  - { code: LD-06-04, name_zh: 竞业限制范围与期限合理性, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§24", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-07 劳务派遣 (做能用)
+  - { code: LD-07-01, name_zh: 同工同酬争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§63", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-07-02, name_zh: 派遣岗位三性违法, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§66", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-07-03, name_zh: 用工单位与派遣单位连带责任, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§92", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-07-04, name_zh: 退回派遣与退工争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§65", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-08 女职工与未成年工 (做能用)
+  - { code: LD-08-01, name_zh: 三期女职工解除保护, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§42", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-08-02, name_zh: 产假与生育待遇, coverage_tier: make_usable, law_ref: "law:女职工劳动保护特别规定/v2012-04-28/§7", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-08-03, name_zh: 哺乳期工作安排, coverage_tier: make_usable, law_ref: "law:女职工劳动保护特别规定/v2012-04-28/§9", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-08-04, name_zh: 未成年工禁忌劳动, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§64", procedures: { main: inspection, parallel: [], fallback: arbitration } }
+  # LD-09 休息休假 (做深)
+  - { code: LD-09-01, name_zh: 加班费计算与举证, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§44", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-09-02, name_zh: 综合计算工时与不定时工时, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§39", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-09-03, name_zh: 带薪年休假, coverage_tier: make_deep, law_ref: "law:职工带薪年休假条例/v2008-01-01/§5", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-09-04, name_zh: 法定节假日加班, coverage_tier: make_deep, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§44", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  # LD-10 劳动关系确认 (做能用)
+  - { code: LD-10-01, name_zh: 事实劳动关系认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-10-02, name_zh: 双重劳动关系, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§39", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-10-03, name_zh: 承包挂靠用工关系认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-10-04, name_zh: 实习与劳动关系区分, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-11 集体劳动争议 (做能用)
+  - { code: LD-11-01, name_zh: 集体合同争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§51", procedures: { main: mediation, parallel: [arbitration], fallback: litigation } }
+  - { code: LD-11-02, name_zh: 群体性欠薪, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§85", procedures: { main: inspection, parallel: [arbitration], fallback: criminal_report } }
+  - { code: LD-11-03, name_zh: 集体停工与协商, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§51", procedures: { main: mediation, parallel: [], fallback: arbitration } }
+  # LD-12 非全日制 (做能用)
+  - { code: LD-12-01, name_zh: 非全日制工时认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§68", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-12-02, name_zh: 非全日制小时工资, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§72", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-12-03, name_zh: 非全日制工伤待遇, coverage_tier: make_usable, law_ref: "law:工伤保险条例/v2010-12-20/§14", procedures: { main: recognition, parallel: [], fallback: arbitration } }
+  # LD-13 新就业形态 (做能用)
+  - { code: LD-13-01, name_zh: 平台用工劳动关系认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-13-02, name_zh: 算法控制三要素, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-13-03, name_zh: 配送骑手职业伤害保障, coverage_tier: make_usable, law_ref: "law:工伤保险条例/v2010-12-20/§14", procedures: { main: recognition, parallel: [arbitration], fallback: litigation } }
+  - { code: LD-13-04, name_zh: 平台抽成与收入争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§30", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-14 跨境涉外 (做能用)
+  - { code: LD-14-01, name_zh: 外籍人员就业许可, coverage_tier: make_usable, law_ref: "law:外国人在中国就业管理规定/v2017-03-13/§5", procedures: { main: inspection, parallel: [], fallback: litigation } }
+  - { code: LD-14-02, name_zh: 涉外劳动合同法律适用, coverage_tier: make_usable, law_ref: "law:中华人民共和国涉外民事关系法律适用法/v2011-04-01/§43", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-14-03, name_zh: 境外派遣与外派待遇, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§30", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-15 退休返聘 (做能用)
+  - { code: LD-15-01, name_zh: 退休返聘劳务关系认定, coverage_tier: make_usable, law_ref: "law:最高人民法院关于审理劳动争议案件适用法律若干问题的解释（一）/v2021-01-01/§32", procedures: { main: litigation, parallel: [], fallback: mediation } }
+  - { code: LD-15-02, name_zh: 超龄劳动者工伤待遇, coverage_tier: make_usable, law_ref: "law:工伤保险条例/v2010-12-20/§14", procedures: { main: recognition, parallel: [litigation], fallback: arbitration } }
+  - { code: LD-15-03, name_zh: 达到退休年龄合同终止, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§44", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-16 AI与自动化替代 (做能用)
+  - { code: LD-16-01, name_zh: 技术替代经济性裁员, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§41", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-16-02, name_zh: 岗位消失调岗合理性, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§40", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-16-03, name_zh: 自动化转岗培训义务, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§40", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-16-04, name_zh: 客观情况重大变化解除, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§40", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  # LD-17 远程办公 (做能用)
+  - { code: LD-17-01, name_zh: 远程办公工时认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§36", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-17-02, name_zh: 居家办公费用分担, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§17", procedures: { main: negotiation, parallel: [], fallback: arbitration } }
+  - { code: LD-17-03, name_zh: 混合办公考勤争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§4", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-17-04, name_zh: 远程工伤认定, coverage_tier: make_usable, law_ref: "law:工伤保险条例/v2010-12-20/§14", procedures: { main: recognition, parallel: [], fallback: litigation } }
+  # LD-18 数字监控与隐私 (做能用)
+  - { code: LD-18-01, name_zh: 工作设备监控合法性, coverage_tier: make_usable, law_ref: "law:中华人民共和国个人信息保护法/v2021-11-01/§13", procedures: { main: negotiation, parallel: [], fallback: litigation } }
+  - { code: LD-18-02, name_zh: 员工个人信息处理, coverage_tier: make_usable, law_ref: "law:中华人民共和国个人信息保护法/v2021-11-01/§17", procedures: { main: negotiation, parallel: [], fallback: litigation } }
+  - { code: LD-18-03, name_zh: 离职数据归还与删除, coverage_tier: make_usable, law_ref: "law:中华人民共和国个人信息保护法/v2021-11-01/§47", procedures: { main: negotiation, parallel: [], fallback: litigation } }
+  - { code: LD-18-04, name_zh: 监控证据合法性认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国民事诉讼法/v2023-09-01/§66", procedures: { main: litigation, parallel: [], fallback: arbitration } }
+  # LD-19 算法管理 (做能用)
+  - { code: LD-19-01, name_zh: 算法绩效考核争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§4", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-19-02, name_zh: 自动化排班与休息权, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动法/v2018-12-29/§38", procedures: { main: arbitration, parallel: [inspection], fallback: litigation } }
+  - { code: LD-19-03, name_zh: 算法解雇透明度, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§4", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-19-04, name_zh: 数据画像与差别待遇, coverage_tier: make_usable, law_ref: "law:中华人民共和国个人信息保护法/v2021-11-01/§24", procedures: { main: negotiation, parallel: [arbitration], fallback: litigation } }
+  # LD-20 直播电商与自媒体 (做能用)
+  - { code: LD-20-01, name_zh: 主播劳动关系认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-20-02, name_zh: MCN机构合作关系定性, coverage_tier: make_usable, law_ref: "law:中华人民共和国民法典/v2021-01-01/§791", procedures: { main: litigation, parallel: [], fallback: arbitration } }
+  - { code: LD-20-03, name_zh: 直播收入与分成争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国民法典/v2021-01-01/§577", procedures: { main: litigation, parallel: [], fallback: arbitration } }
+  - { code: LD-20-04, name_zh: 自媒体创作者用工认定, coverage_tier: make_usable, law_ref: "law:中华人民共和国劳动合同法/v2012-12-28/§7", procedures: { main: arbitration, parallel: [], fallback: litigation } }
+  - { code: LD-20-05, name_zh: 网红违约金与解约争议, coverage_tier: make_usable, law_ref: "law:中华人民共和国民法典/v2021-01-01/§585", procedures: { main: litigation, parallel: [], fallback: arbitration } }

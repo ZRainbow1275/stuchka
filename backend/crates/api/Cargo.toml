@@ -34,6 +34,9 @@ document.workspace = true
 audit.workspace = true
 
 axum = { version = "0.7", features = ["ws", "multipart"] }
+# async-trait: the ai-dispatcher `RoutingAuditSink` trait is `#[async_trait]` (object-safe `dyn`),
+# implemented here by `AuditLogRoutingSink` over the audit hash chain (compliance/02 §6).
+async-trait = "0.1"
 tokio = { version = "1", features = ["full"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["trace"] }

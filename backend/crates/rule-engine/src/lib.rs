@@ -9,6 +9,7 @@
 pub mod compute;
 pub mod coverage;
 pub mod deadline;
+pub mod diagnosis;
 pub mod error;
 pub mod evidence_score;
 pub mod facts;
@@ -16,6 +17,11 @@ pub mod region;
 
 pub use coverage::{
     ComputedValue, CoverageTag, DerivationStep, RuleLawRef, RuleNextAction, RuleOutcome,
+};
+pub use diagnosis::{
+    CatalogEntry, DecisionTree, DiagnosisCatalog, DiagnosisEngine, DiagnosisInput,
+    DiagnosisNextAction, DiagnosisOutput, DiagnosisResult, Procedure, Question, RecommendedProcedures,
+    Step as DiagnosisStep,
 };
 pub use deadline::{DeadlineFacts, DeadlineKind};
 pub use error::RuleError;

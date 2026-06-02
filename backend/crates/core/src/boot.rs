@@ -27,7 +27,7 @@ use db::Store;
 use hsd::HsdDetector;
 use kb::{Bm25Index, KbManifest, KbVersion, CATEGORY_TOTAL, SUBCATEGORY_TOTAL};
 use rand::RngCore;
-use rule_engine::RuleEngine;
+use rule_engine::{DiagnosisEngine, RuleEngine};
 
 /// A fully prepared boot: loaded config, a bound loopback listener, and the handshake
 /// (port + token) to announce on stdout.
@@ -87,6 +87,8 @@ pub struct BootServices {
     pub session_dek: SessionDek,
     /// Pure rule engine (M9 compute + M5 deadline), all 31 provinces loaded.
     pub rule_engine: RuleEngine,
+    /// Deterministic M1 diagnosis engine (问诊树 + 85-subcategory catalog, INV-01 pure rules).
+    pub diagnosis_engine: DiagnosisEngine,
     /// High-sensitivity detector (R1a regex strong-signal layer).
     pub hsd: Arc<HsdDetector>,
     /// KB BM25 index seeded with the sample law corpus.
@@ -136,9 +138,11 @@ impl BootServices {
             }
         };
 
-        // 5. Rule engine (all 31 provinces).
+        // 5. Rule engine (all 31 provinces) + deterministic M1 diagnosis engine.
         let rule_engine =
             RuleEngine::new().map_err(|e| anyhow::anyhow!("load rule engine: {e}"))?;
+        let diagnosis_engine =
+            DiagnosisEngine::new().map_err(|e| anyhow::anyhow!("load diagnosis engine: {e}"))?;
 
         // 6. KB index + manifest from the seeded sample corpus.
         let kb_index =
@@ -158,6 +162,7 @@ impl BootServices {
             audit_chain_ok,
             session_dek,
             rule_engine,
+            diagnosis_engine,
             hsd: Arc::new(hsd),
             kb_index: Arc::new(kb_index),
             kb_manifest,
@@ -186,6 +191,8 @@ impl BootServices {
 
         let rule_engine =
             RuleEngine::new().map_err(|e| anyhow::anyhow!("load rule engine: {e}"))?;
+        let diagnosis_engine =
+            DiagnosisEngine::new().map_err(|e| anyhow::anyhow!("load diagnosis engine: {e}"))?;
         let kb_index =
             Bm25Index::with_sample_data().map_err(|e| anyhow::anyhow!("build kb index: {e}"))?;
         let kb_manifest = sample_manifest();
@@ -202,6 +209,7 @@ impl BootServices {
             audit_chain_ok,
             session_dek,
             rule_engine,
+            diagnosis_engine,
             hsd: Arc::new(hsd),
             kb_index: Arc::new(kb_index),
             kb_manifest,

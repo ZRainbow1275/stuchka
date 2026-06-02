@@ -6,9 +6,15 @@
 #   2. `tools/lint_no_emoji.dart` is the CI Emoji scanner (run in test/no_emoji_lint_test.dart).
 #   3. `test/lint/no_forbidden_icons_test.dart` greps the lib tree for `Icons.` / `CupertinoIcons.`.
 #
-# The spec's `custom_lint` plugin (avoid-hardcoded-colors / forbid-emoji-in-string-literal) is the
-# R-phase target; it is deferred here to keep `flutter analyze` deterministic on the beta toolchain.
-# The grep + emoji tests provide the same enforcement today.
+# 防线1 (spec 01 §1.8): the `custom_lint` plugin (tools/lints) implements two rules —
+# `avoid_hardcoded_colors` + `forbid_emoji_in_string_literal` (real code, see tools/lints/lib/src).
+# It is DEFERRED (commented) here because custom_lint 0.8.x pins analyzer ^8.4.0 and does not produce
+# diagnostics deterministically on the Dart 3.11 beta analysis server — see the pubspec.yaml note.
+# Until custom_lint tracks analyzer 9.x, the test-based scanners below are the authoritative gate:
+#   - test/lint/no_emoji_lint_test.dart        (Emoji scan over lib/ + test/ + tools/)
+#   - test/lint/no_hardcoded_colors_test.dart  (Color(0x..)/Colors.* scan over lib/ business code)
+#   - test/lint/no_forbidden_icons_test.dart   (Material/Cupertino Icons scan)
+# When the toolchain catches up: uncomment the custom_lint deps in pubspec.yaml + the block below.
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
@@ -17,8 +23,15 @@ analyzer:
     todo: ignore
   exclude:
     - lib/theme/generated/**
+    - tools/lints/**
 
 linter:
   rules:
     prefer_single_quotes: true
     avoid_print: true
+
+# custom_lint plugin block (spec 01 §1.8 防线1) — DEFERRED (see note above). Uncomment with deps.
+# custom_lint:
+#   rules:
+#     - avoid_hardcoded_colors
+#     - forbid_emoji_in_string_literal

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../features/accessibility/high_risk/countdown_button.dart';
+import 'dto/diagnose_dto.dart';
 import 'dto/dtos.dart';
 import 'rust_core_handshake.dart';
 
@@ -135,6 +137,17 @@ class RustCoreClient {
     return _unwrap(res, (d) => EvidenceDto.fromJson(d as Map<String, dynamic>));
   }
 
+  // --- diagnose (M1) ---
+
+  /// `POST /diagnose` — the deterministic M1 DiagnosisEngine (backend item A). Drives the structured
+  /// §4.1.2 DiagnosisOutput (subcategory + coverage_tier + recommended_procedures + next_actions)
+  /// from the ≤7-question 问诊树 answer set. This is the PRIMARY diagnosis path; the LLM free-text
+  /// query below is a secondary assist only.
+  Future<DiagnosisOutput> diagnose(DiagnoseReq req) async {
+    final res = await _dio.post<Map<String, dynamic>>('/diagnose', data: req.toJson());
+    return _unwrap(res, (d) => DiagnosisOutput.fromJson(d as Map<String, dynamic>));
+  }
+
   // --- llm ---
 
   Future<LlmQueryResp> llmQuery(LlmQueryReq req) async {
@@ -162,6 +175,32 @@ class RustCoreClient {
   }
 
   // --- audit ---
+
+  /// `POST /audit/ack` — persist an INV-10 high-risk disclaimer acknowledgement into the
+  /// independent audit.sqlite hash chain (compliance/05 §2.3 audit four-tuple, INV-06). Called by
+  /// every `HighRiskGate` call site on the SECOND (final) confirm so the acknowledgement
+  /// (scene + measured [ConfirmTimings]) is AUDITED rather than dropped at the UI. Returns the
+  /// appended record `seq`.
+  Future<int> ackHighRisk({
+    required String caseId,
+    required String sceneId,
+    required ConfirmTimings timings,
+  }) async {
+    final res = await _dio.post<Map<String, dynamic>>(
+      '/audit/ack',
+      data: {
+        'caseId': caseId,
+        'sceneId': sceneId,
+        'timings': {
+          'requiresSecondPress': timings.requiresSecondPress,
+          'firstCountdownMs': timings.firstCountdownMs,
+          'secondPressGapMs': timings.secondPressGapMs,
+          'totalFlowMs': timings.totalFlowMs,
+        },
+      },
+    );
+    return _unwrap(res, (d) => ((d as Map)['seq'] as num).toInt());
+  }
 
   Future<List<AuditEntryDto>> queryAudit({String? caseId, int? cursor, int? limit}) async {
     final query = <String, dynamic>{};

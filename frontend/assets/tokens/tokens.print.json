@@ -1,0 +1,57 @@
+{
+  "_doc": "GB 45438-2025 公文打印 token (spec 01 §1.1 / §1.9 / §1.10). 用于 PDF / DOCX 模板。打印不依赖深色护眼覆盖；与 GB 45438 显式标识页眉冲突时让位给标识 (prd §5.3.1)。所有数值为打印基准；最终 PDF 与四层水印由 Rust crates/document 唯一生成 (宪法 D5)。",
+  "color": {
+    "text": {
+      "body": "#000000",
+      "heading": "#000000",
+      "muted": "#3A3A3A",
+      "seal": "#A33A2F",
+      "rule_line": "#000000"
+    },
+    "page": {
+      "background": "#FFFFFF",
+      "header_band": "#FFFFFF",
+      "watermark_hint": "#C8C8C8"
+    }
+  },
+  "typography": {
+    "fontFamilyBody": "SourceHanSerif",
+    "fontFamilyHeading": "SourceHanSerif",
+    "fontFamilyMono": "JetBrainsMonoSC",
+    "fontFamilySeal": "SourceHanSerif",
+    "size": {
+      "title": 22,
+      "heading1": 18,
+      "heading2": 16,
+      "body": 15,
+      "footnote": 12,
+      "header_label": 10.5
+    },
+    "weight": {
+      "body": 400,
+      "heading": 700,
+      "seal": 700
+    },
+    "lineHeight": 1.5,
+    "firstLineIndentEm": 2
+  },
+  "page": {
+    "size": "A4",
+    "widthMm": 210,
+    "heightMm": 297,
+    "marginTopMm": 25,
+    "marginBottomMm": 25,
+    "marginLeftMm": 20,
+    "marginRightMm": 20,
+    "headerHeightMm": 12,
+    "footerHeightMm": 10
+  },
+  "gb45438": {
+    "_doc": "GB 45438-2025 四层标识打印参数 (compliance/01 为唯一权威；前端仅预览，不写最终水印 · D5)。",
+    "headerLabelText": "本文书由 Stučka 辅助生成，不构成法律意见",
+    "headerLabelAlign": "center",
+    "perPageHeader": true,
+    "firstPageDeclaration": true,
+    "yieldsToIdentityHeader": true
+  }
+}

@@ -23,6 +23,14 @@ pub enum RouteTarget {
     BlockedNoLocal,
 }
 
+impl RouteTarget {
+    /// Whether this Stage-E target sends the payload to a cloud provider (the only targets that may
+    /// carry the desensitised payload off-device; `compliance/02` §3.4).
+    pub fn is_cloud_target(self) -> bool {
+        matches!(self, RouteTarget::Cloud(_))
+    }
+}
+
 /// Decide the Stage E route.
 ///
 /// - HSD `ForceLocal` (or the user's `force_local`) pins to local; if no local model exists the

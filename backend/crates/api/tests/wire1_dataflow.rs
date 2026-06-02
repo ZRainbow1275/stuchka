@@ -284,4 +284,83 @@ fn wire1_full_dataflow_over_http_bearer() {
             .map(|h| !h.is_empty())
             .unwrap_or(false));
     }
+
+    // ---- 8. INV-10 high-risk acknowledgement is AUDITED (compliance/05 §2.3, INV-06). ----
+    // POST /audit/ack persists the disclaimer acknowledgement (scene + ConfirmTimings) into the
+    // independent audit.sqlite hash chain instead of dropping it at the UI call site.
+    let before = entries.len();
+    let ack = c
+        .post(format!("{base}/audit/ack"))
+        .bearer_auth(TOKEN)
+        .json(&json!({
+            "caseId": case_id,
+            "sceneId": "S-02",
+            "timings": {
+                "requiresSecondPress": true,
+                "firstCountdownMs": 8000,
+                "secondPressGapMs": 3000,
+                "totalFlowMs": 11000
+            }
+        }))
+        .send()
+        .expect("audit ack");
+    assert_eq!(ack.status().as_u16(), 200, "POST /audit/ack => 200");
+    let ack_body: Value = ack.json().unwrap();
+    assert!(ack_body["error"].is_null(), "ack error: {ack_body}");
+    let ack_seq = ack_body["data"]["seq"].as_i64().expect("ack seq");
+    assert!(ack_seq > last_seq, "ack appended after the existing tail");
+
+    // A sub-8000ms cooldown is rejected (INV-10 §2.3 floor: the UI must not shorten the window).
+    let short = c
+        .post(format!("{base}/audit/ack"))
+        .bearer_auth(TOKEN)
+        .json(&json!({
+            "caseId": case_id,
+            "sceneId": "S-02",
+            "timings": {
+                "requiresSecondPress": true,
+                "firstCountdownMs": 4000,
+                "secondPressGapMs": 3000,
+                "totalFlowMs": 7000
+            }
+        }))
+        .send()
+        .expect("audit ack short");
+    assert_eq!(
+        short.status().as_u16(),
+        400,
+        "POST /audit/ack with < 8000ms cooldown => 400"
+    );
+
+    // Re-query: the new ack is present, the chain still verifies (a non-empty 200 only succeeds when
+    // verify_chain holds), and the persisted `what` carries the scene + timings.
+    let after_audit: Value = c
+        .get(format!("{base}/audit"))
+        .query(&[("caseId", case_id.as_str())])
+        .bearer_auth(TOKEN)
+        .send()
+        .expect("audit re-query")
+        .json()
+        .unwrap();
+    assert!(after_audit["error"].is_null(), "audit re-query error: {after_audit}");
+    let after_entries = after_audit["data"].as_array().expect("audit entries");
+    assert_eq!(
+        after_entries.len(),
+        before + 1,
+        "exactly one new audited acknowledgement (the short one was rejected)"
+    );
+    let ack_entry = after_entries
+        .iter()
+        .find(|e| e["seq"].as_i64() == Some(ack_seq))
+        .expect("the ack entry is in the projection");
+    assert_eq!(
+        ack_entry["why"], "inv10_settlement_below80",
+        "S-02 ack maps to the §4.4 Inv10SettlementBelow80 reason: {ack_entry}"
+    );
+    assert_eq!(ack_entry["what"]["scene_id"], "S-02");
+    assert_eq!(ack_entry["what"]["ui_reason"], "high_risk_ack");
+    assert_eq!(
+        ack_entry["what"]["timings"]["cooldownActualMs"], 8000,
+        "the measured cooldown_actual_ms is persisted: {ack_entry}"
+    );
 }

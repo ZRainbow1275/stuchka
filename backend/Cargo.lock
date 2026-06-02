@@ -217,6 +217,7 @@ version = "0.1.0"
 dependencies = [
  "ai-dispatcher",
  "anyhow",
+ "async-trait",
  "audit",
  "axum",
  "base64 0.22.1",

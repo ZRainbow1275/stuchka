@@ -15,6 +15,7 @@ pub mod audit_helper;
 pub mod ipc;
 pub mod responses;
 pub mod routes;
+pub mod routing_audit_sink;
 pub mod state;
 pub mod sync_state;
 pub mod ws;

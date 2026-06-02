@@ -56,3 +56,48 @@ class StuchkaSpacingTokens {
   static const double radiusCard = 8;
   static const double radiusDialog = 12;
 }
+
+/// GB 45438-2025 公文打印 token (spec 01 §1.1 / §1.10). Print is platform-independent and
+/// has no dark override; the final PDF + four-layer watermark are owned by the Rust
+/// crates/document (宪法 D5) — these constants drive the editor-side preview only.
+class StuchkaPrintTokens {
+  StuchkaPrintTokens._();
+  // text colors
+  static const Color textBody = Color(0xFF000000);
+  static const Color textHeading = Color(0xFF000000);
+  static const Color textMuted = Color(0xFF3A3A3A);
+  static const Color textSeal = Color(0xFFA33A2F);
+  static const Color ruleLine = Color(0xFF000000);
+  // page colors
+  static const Color pageBackground = Color(0xFFFFFFFF);
+  static const Color headerBand = Color(0xFFFFFFFF);
+  static const Color watermarkHint = Color(0xFFC8C8C8);
+  // typography
+  static const String fontFamilyBody = 'SourceHanSerif';
+  static const String fontFamilyHeading = 'SourceHanSerif';
+  static const String fontFamilyMono = 'JetBrainsMonoSC';
+  static const String fontFamilySeal = 'SourceHanSerif';
+  static const double sizeTitle = 22;
+  static const double sizeHeading1 = 18;
+  static const double sizeHeading2 = 16;
+  static const double sizeBody = 15;
+  static const double sizeFootnote = 12;
+  static const double sizeHeaderLabel = 10.5;
+  static const double lineHeight = 1.5;
+  static const double firstLineIndentEm = 2;
+  // page geometry (mm)
+  static const double pageWidthMm = 210;
+  static const double pageHeightMm = 297;
+  static const double marginTopMm = 25;
+  static const double marginBottomMm = 25;
+  static const double marginLeftMm = 20;
+  static const double marginRightMm = 20;
+  static const double headerHeightMm = 12;
+  static const double footerHeightMm = 10;
+  // GB 45438 四层标识打印参数 (compliance/01 唯一权威)
+  static const String gbHeaderLabelText = '本文书由 Stučka 辅助生成，不构成法律意见';
+  static const String gbHeaderLabelAlign = 'center';
+  static const bool gbPerPageHeader = true;
+  static const bool gbFirstPageDeclaration = true;
+  static const bool gbYieldsToIdentityHeader = true;
+}

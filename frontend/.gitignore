@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Fonts are fetched by tools/fetch_fonts.dart (SIL OFL, redistributable) — never committed
+# (keeps the repo small + the build green without the OTFs present). See pubspec.yaml fonts: block.
+/assets/fonts/*.otf
+/assets/fonts/*.ttf
+/assets/fonts/*.ttc

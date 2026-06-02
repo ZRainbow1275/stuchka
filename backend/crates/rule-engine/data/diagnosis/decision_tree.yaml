@@ -1,0 +1,339 @@
+# M1 诊断问诊树 (prd/04 §4.1.4) — 数据驱动决策树，≤7 问，每条路径终止于 85 子类之一。
+#
+# 结构:
+#   nodes: 节点表，按 id 索引。根节点 id = "root"。
+#   每个节点二选一:
+#     - 问题节点 (question): 携带 prompt_zh + answers[]，每个 answer { value, label_zh, next }
+#       next 指向另一个节点 id (问题或叶子)。
+#     - 叶子节点 (leaf): 携带 subcategory (LD-NN-NN)。
+#
+# 不变量 (tests/diagnosis_tree.rs 强制):
+#   1. 每个 answer.next 必须指向存在的节点。
+#   2. 每条从 root 出发的路径深度 ≤ 7 (问题数，根 = 第 1 问)。
+#   3. 每条路径最终到达 leaf，且 leaf.subcategory 是 85 子类之一。
+#   4. 无环。
+#   5. 85 子类全部可达 (做能用以上覆盖, prd §4.1.5)。
+#
+# 设计: 第 1 问按 20 大类的争议焦点分流到大类子树；大类内 1-5 个区分问触达子类。
+# 最长路径 (LD-05 工伤) = 1(root) + 区分问，控制在 7 以内。
+
+root:
+  question:
+    prompt_zh: 您的劳动纠纷主要围绕以下哪一类核心问题
+    answers:
+      - { value: contract_formation, label_zh: 劳动合同订立（未签合同/试用期/条款/入职欺诈/服务期）, next: q_ld01 }
+      - { value: termination, label_zh: 解除或终止劳动合同（违法解除/裁员/补偿）, next: q_ld02 }
+      - { value: wage, label_zh: 工资报酬（拖欠/克扣/最低工资/提成/凭证）, next: q_ld03 }
+      - { value: social_insurance, label_zh: 社会保险（未缴/欠缴/基数/转移）, next: q_ld04 }
+      - { value: work_injury, label_zh: 工伤与职业病, next: q_ld05 }
+      - { value: non_compete, label_zh: 竞业限制与商业秘密, next: q_ld06 }
+      - { value: dispatch, label_zh: 劳务派遣, next: q_ld07 }
+      - { value: special_protection, label_zh: 女职工与未成年工特殊保护, next: q_ld08 }
+      - { value: rest_leave, label_zh: 休息休假与加班, next: q_ld09 }
+      - { value: relation_confirm, label_zh: 劳动关系确认, next: q_ld10 }
+      - { value: collective, label_zh: 集体劳动争议, next: q_ld11 }
+      - { value: part_time, label_zh: 非全日制用工, next: q_ld12 }
+      - { value: new_employment, label_zh: 新就业形态（平台/外卖/网约车）, next: q_ld13 }
+      - { value: cross_border, label_zh: 跨境与涉外劳动, next: q_ld14 }
+      - { value: retired_rehired, label_zh: 退休返聘与超龄用工, next: q_ld15 }
+      - { value: ai_automation, label_zh: AI与自动化技术替代岗位, next: q_ld16 }
+      - { value: remote_work, label_zh: 远程办公与混合工作, next: q_ld17 }
+      - { value: monitoring_privacy, label_zh: 数字监控与职场隐私, next: q_ld18 }
+      - { value: algorithm_mgmt, label_zh: 算法管理与劳动权益, next: q_ld19 }
+      - { value: livestream, label_zh: 直播电商与自媒体从业, next: q_ld20 }
+
+# --- LD-01 劳动合同订立 ---
+q_ld01:
+  question:
+    prompt_zh: 合同订立纠纷的具体焦点是
+    answers:
+      - { value: no_written, label_zh: 未签订书面劳动合同（主张二倍工资）, next: leaf_LD-01-01 }
+      - { value: probation, label_zh: 试用期约定违法（期限/工资/解除）, next: leaf_LD-01-02 }
+      - { value: invalid_clause, label_zh: 合同条款无效或显失公平, next: leaf_LD-01-03 }
+      - { value: fraud, label_zh: 入职欺诈与背景虚假, next: leaf_LD-01-04 }
+      - { value: service_period, label_zh: 服务期与培训费用约定, next: leaf_LD-01-05 }
+leaf_LD-01-01: { leaf: { subcategory: LD-01-01 } }
+leaf_LD-01-02: { leaf: { subcategory: LD-01-02 } }
+leaf_LD-01-03: { leaf: { subcategory: LD-01-03 } }
+leaf_LD-01-04: { leaf: { subcategory: LD-01-04 } }
+leaf_LD-01-05: { leaf: { subcategory: LD-01-05 } }
+
+# --- LD-02 解除与终止 ---
+q_ld02:
+  question:
+    prompt_zh: 解除或终止的情形是
+    answers:
+      - { value: illegal_termination, label_zh: 用人单位违法解除, next: leaf_LD-02-01 }
+      - { value: layoff, label_zh: 经济性裁员, next: leaf_LD-02-02 }
+      - { value: mutual, label_zh: 协商解除经济补偿, next: leaf_LD-02-03 }
+      - { value: worker_unilateral, label_zh: 劳动者单方解除（被迫离职）经济补偿, next: leaf_LD-02-04 }
+      - { value: expiry, label_zh: 合同到期终止补偿, next: leaf_LD-02-05 }
+      - { value: serious_breach, label_zh: 严重违纪解除合法性, next: leaf_LD-02-06 }
+leaf_LD-02-01: { leaf: { subcategory: LD-02-01 } }
+leaf_LD-02-02: { leaf: { subcategory: LD-02-02 } }
+leaf_LD-02-03: { leaf: { subcategory: LD-02-03 } }
+leaf_LD-02-04: { leaf: { subcategory: LD-02-04 } }
+leaf_LD-02-05: { leaf: { subcategory: LD-02-05 } }
+leaf_LD-02-06: { leaf: { subcategory: LD-02-06 } }
+
+# --- LD-03 工资报酬 ---
+q_ld03:
+  question:
+    prompt_zh: 工资报酬纠纷的具体情形是
+    answers:
+      - { value: arrears, label_zh: 拖欠工资（未足额按时支付）, next: leaf_LD-03-01 }
+      - { value: deduction, label_zh: 克扣工资（无故扣减）, next: leaf_LD-03-02 }
+      - { value: min_wage, label_zh: 低于最低工资标准, next: leaf_LD-03-03 }
+      - { value: commission, label_zh: 提成奖金计算争议, next: leaf_LD-03-04 }
+      - { value: malicious, label_zh: 恶意欠薪（监察责令仍不付，主张加付）, next: leaf_LD-03-05 }
+      - { value: proof, label_zh: 工资支付凭证与举证, next: leaf_LD-03-06 }
+leaf_LD-03-01: { leaf: { subcategory: LD-03-01 } }
+leaf_LD-03-02: { leaf: { subcategory: LD-03-02 } }
+leaf_LD-03-03: { leaf: { subcategory: LD-03-03 } }
+leaf_LD-03-04: { leaf: { subcategory: LD-03-04 } }
+leaf_LD-03-05: { leaf: { subcategory: LD-03-05 } }
+leaf_LD-03-06: { leaf: { subcategory: LD-03-06 } }
+
+# --- LD-04 社会保险 ---
+q_ld04:
+  question:
+    prompt_zh: 社会保险纠纷的具体情形是
+    answers:
+      - { value: waiver, label_zh: 弃缴约定无效并主张单方解除, next: leaf_LD-04-01 }
+      - { value: unpaid, label_zh: 未缴或欠缴社会保险, next: leaf_LD-04-02 }
+      - { value: underpaid_base, label_zh: 低缴漏缴社保基数争议, next: leaf_LD-04-03 }
+      - { value: uninsured_injury, label_zh: 未参保导致工伤损失, next: leaf_LD-04-04 }
+      - { value: transfer, label_zh: 社保转移接续争议, next: leaf_LD-04-05 }
+leaf_LD-04-01: { leaf: { subcategory: LD-04-01 } }
+leaf_LD-04-02: { leaf: { subcategory: LD-04-02 } }
+leaf_LD-04-03: { leaf: { subcategory: LD-04-03 } }
+leaf_LD-04-04: { leaf: { subcategory: LD-04-04 } }
+leaf_LD-04-05: { leaf: { subcategory: LD-04-05 } }
+
+# --- LD-05 工伤与职业病 (做深, 最长路径) ---
+q_ld05:
+  question:
+    prompt_zh: 工伤与职业病纠纷处于哪个阶段或焦点
+    answers:
+      - { value: recognition, label_zh: 工伤认定争议（是否认定为工伤）, next: leaf_LD-05-01 }
+      - { value: grading, label_zh: 劳动能力鉴定与伤残等级, next: leaf_LD-05-02 }
+      - { value: medical, label_zh: 工伤医疗费与停工留薪期待遇, next: leaf_LD-05-03 }
+      - { value: employment_subsidy, label_zh: 一次性伤残就业补助金, next: leaf_LD-05-04 }
+      - { value: death, label_zh: 工亡待遇与供养亲属抚恤, next: leaf_LD-05-05 }
+      - { value: occupational, label_zh: 职业病诊断与赔偿, next: q_ld05_occ }
+q_ld05_occ:
+  question:
+    prompt_zh: 职业病情形请进一步确认
+    answers:
+      - { value: confirmed, label_zh: 已确诊职业病，主张诊断与赔偿, next: leaf_LD-05-06 }
+      - { value: suspected, label_zh: 疑似职业病，需先推进诊断流程, next: leaf_LD-05-06 }
+leaf_LD-05-01: { leaf: { subcategory: LD-05-01 } }
+leaf_LD-05-02: { leaf: { subcategory: LD-05-02 } }
+leaf_LD-05-03: { leaf: { subcategory: LD-05-03 } }
+leaf_LD-05-04: { leaf: { subcategory: LD-05-04 } }
+leaf_LD-05-05: { leaf: { subcategory: LD-05-05 } }
+leaf_LD-05-06: { leaf: { subcategory: LD-05-06 } }
+
+# --- LD-06 竞业限制与商业秘密 ---
+q_ld06:
+  question:
+    prompt_zh: 竞业限制与商业秘密纠纷的焦点是
+    answers:
+      - { value: comp, label_zh: 竞业限制补偿金（单位未支付补偿）, next: leaf_LD-06-01 }
+      - { value: penalty, label_zh: 违反竞业限制违约金, next: leaf_LD-06-02 }
+      - { value: secret, label_zh: 商业秘密侵权, next: leaf_LD-06-03 }
+      - { value: scope, label_zh: 竞业限制范围与期限合理性, next: leaf_LD-06-04 }
+leaf_LD-06-01: { leaf: { subcategory: LD-06-01 } }
+leaf_LD-06-02: { leaf: { subcategory: LD-06-02 } }
+leaf_LD-06-03: { leaf: { subcategory: LD-06-03 } }
+leaf_LD-06-04: { leaf: { subcategory: LD-06-04 } }
+
+# --- LD-07 劳务派遣 ---
+q_ld07:
+  question:
+    prompt_zh: 劳务派遣纠纷的焦点是
+    answers:
+      - { value: equal_pay, label_zh: 同工同酬争议, next: leaf_LD-07-01 }
+      - { value: three_nature, label_zh: 派遣岗位三性（临时性/辅助性/替代性）违法, next: leaf_LD-07-02 }
+      - { value: joint_liability, label_zh: 用工单位与派遣单位连带责任, next: leaf_LD-07-03 }
+      - { value: return, label_zh: 退回派遣与退工争议, next: leaf_LD-07-04 }
+leaf_LD-07-01: { leaf: { subcategory: LD-07-01 } }
+leaf_LD-07-02: { leaf: { subcategory: LD-07-02 } }
+leaf_LD-07-03: { leaf: { subcategory: LD-07-03 } }
+leaf_LD-07-04: { leaf: { subcategory: LD-07-04 } }
+
+# --- LD-08 女职工与未成年工 ---
+q_ld08:
+  question:
+    prompt_zh: 特殊保护纠纷的具体情形是
+    answers:
+      - { value: three_periods, label_zh: 三期（孕期/产期/哺乳期）女职工解除保护, next: leaf_LD-08-01 }
+      - { value: maternity, label_zh: 产假与生育待遇, next: leaf_LD-08-02 }
+      - { value: lactation, label_zh: 哺乳期工作安排, next: leaf_LD-08-03 }
+      - { value: minor, label_zh: 未成年工禁忌劳动, next: leaf_LD-08-04 }
+leaf_LD-08-01: { leaf: { subcategory: LD-08-01 } }
+leaf_LD-08-02: { leaf: { subcategory: LD-08-02 } }
+leaf_LD-08-03: { leaf: { subcategory: LD-08-03 } }
+leaf_LD-08-04: { leaf: { subcategory: LD-08-04 } }
+
+# --- LD-09 休息休假 (做深) ---
+q_ld09:
+  question:
+    prompt_zh: 休息休假与加班纠纷的具体情形是
+    answers:
+      - { value: overtime_pay, label_zh: 加班费计算与举证, next: leaf_LD-09-01 }
+      - { value: flexible_hours, label_zh: 综合计算工时或不定时工时认定, next: leaf_LD-09-02 }
+      - { value: annual_leave, label_zh: 带薪年休假, next: leaf_LD-09-03 }
+      - { value: holiday_ot, label_zh: 法定节假日加班, next: leaf_LD-09-04 }
+leaf_LD-09-01: { leaf: { subcategory: LD-09-01 } }
+leaf_LD-09-02: { leaf: { subcategory: LD-09-02 } }
+leaf_LD-09-03: { leaf: { subcategory: LD-09-03 } }
+leaf_LD-09-04: { leaf: { subcategory: LD-09-04 } }
+
+# --- LD-10 劳动关系确认 ---
+q_ld10:
+  question:
+    prompt_zh: 劳动关系确认纠纷的具体情形是
+    answers:
+      - { value: de_facto, label_zh: 事实劳动关系认定, next: leaf_LD-10-01 }
+      - { value: dual, label_zh: 双重劳动关系, next: leaf_LD-10-02 }
+      - { value: subcontract, label_zh: 承包挂靠用工关系认定, next: leaf_LD-10-03 }
+      - { value: intern, label_zh: 实习与劳动关系区分, next: leaf_LD-10-04 }
+leaf_LD-10-01: { leaf: { subcategory: LD-10-01 } }
+leaf_LD-10-02: { leaf: { subcategory: LD-10-02 } }
+leaf_LD-10-03: { leaf: { subcategory: LD-10-03 } }
+leaf_LD-10-04: { leaf: { subcategory: LD-10-04 } }
+
+# --- LD-11 集体劳动争议 ---
+q_ld11:
+  question:
+    prompt_zh: 集体劳动争议的具体情形是
+    answers:
+      - { value: collective_contract, label_zh: 集体合同争议, next: leaf_LD-11-01 }
+      - { value: mass_arrears, label_zh: 群体性欠薪, next: leaf_LD-11-02 }
+      - { value: strike, label_zh: 集体停工与协商, next: leaf_LD-11-03 }
+leaf_LD-11-01: { leaf: { subcategory: LD-11-01 } }
+leaf_LD-11-02: { leaf: { subcategory: LD-11-02 } }
+leaf_LD-11-03: { leaf: { subcategory: LD-11-03 } }
+
+# --- LD-12 非全日制 ---
+q_ld12:
+  question:
+    prompt_zh: 非全日制用工纠纷的具体情形是
+    answers:
+      - { value: hours, label_zh: 非全日制工时认定, next: leaf_LD-12-01 }
+      - { value: hourly_wage, label_zh: 非全日制小时工资, next: leaf_LD-12-02 }
+      - { value: injury, label_zh: 非全日制工伤待遇, next: leaf_LD-12-03 }
+leaf_LD-12-01: { leaf: { subcategory: LD-12-01 } }
+leaf_LD-12-02: { leaf: { subcategory: LD-12-02 } }
+leaf_LD-12-03: { leaf: { subcategory: LD-12-03 } }
+
+# --- LD-13 新就业形态 ---
+q_ld13:
+  question:
+    prompt_zh: 新就业形态纠纷的具体情形是
+    answers:
+      - { value: relation, label_zh: 平台用工劳动关系认定, next: leaf_LD-13-01 }
+      - { value: algorithm, label_zh: 算法控制三要素（接单分配/路径监控/评分惩罚）, next: leaf_LD-13-02 }
+      - { value: injury, label_zh: 配送骑手职业伤害保障, next: leaf_LD-13-03 }
+      - { value: income, label_zh: 平台抽成与收入争议, next: leaf_LD-13-04 }
+leaf_LD-13-01: { leaf: { subcategory: LD-13-01 } }
+leaf_LD-13-02: { leaf: { subcategory: LD-13-02 } }
+leaf_LD-13-03: { leaf: { subcategory: LD-13-03 } }
+leaf_LD-13-04: { leaf: { subcategory: LD-13-04 } }
+
+# --- LD-14 跨境涉外 ---
+q_ld14:
+  question:
+    prompt_zh: 跨境与涉外劳动纠纷的具体情形是
+    answers:
+      - { value: permit, label_zh: 外籍人员就业许可, next: leaf_LD-14-01 }
+      - { value: applicable_law, label_zh: 涉外劳动合同法律适用, next: leaf_LD-14-02 }
+      - { value: overseas_dispatch, label_zh: 境外派遣与外派待遇, next: leaf_LD-14-03 }
+leaf_LD-14-01: { leaf: { subcategory: LD-14-01 } }
+leaf_LD-14-02: { leaf: { subcategory: LD-14-02 } }
+leaf_LD-14-03: { leaf: { subcategory: LD-14-03 } }
+
+# --- LD-15 退休返聘 ---
+q_ld15:
+  question:
+    prompt_zh: 退休返聘与超龄用工纠纷的具体情形是
+    answers:
+      - { value: rehire_relation, label_zh: 退休返聘劳务关系认定, next: leaf_LD-15-01 }
+      - { value: over_age_injury, label_zh: 超龄劳动者工伤待遇, next: leaf_LD-15-02 }
+      - { value: retirement_age, label_zh: 达到退休年龄合同终止, next: leaf_LD-15-03 }
+leaf_LD-15-01: { leaf: { subcategory: LD-15-01 } }
+leaf_LD-15-02: { leaf: { subcategory: LD-15-02 } }
+leaf_LD-15-03: { leaf: { subcategory: LD-15-03 } }
+
+# --- LD-16 AI与自动化替代 ---
+q_ld16:
+  question:
+    prompt_zh: AI与自动化技术替代岗位纠纷的具体情形是
+    answers:
+      - { value: tech_layoff, label_zh: 技术替代经济性裁员, next: leaf_LD-16-01 }
+      - { value: reassign, label_zh: 岗位消失调岗合理性, next: leaf_LD-16-02 }
+      - { value: retrain, label_zh: 自动化转岗培训义务, next: leaf_LD-16-03 }
+      - { value: material_change, label_zh: 客观情况重大变化解除, next: leaf_LD-16-04 }
+leaf_LD-16-01: { leaf: { subcategory: LD-16-01 } }
+leaf_LD-16-02: { leaf: { subcategory: LD-16-02 } }
+leaf_LD-16-03: { leaf: { subcategory: LD-16-03 } }
+leaf_LD-16-04: { leaf: { subcategory: LD-16-04 } }
+
+# --- LD-17 远程办公 ---
+q_ld17:
+  question:
+    prompt_zh: 远程办公与混合工作模式纠纷的具体情形是
+    answers:
+      - { value: hours, label_zh: 远程办公工时认定, next: leaf_LD-17-01 }
+      - { value: cost, label_zh: 居家办公费用分担, next: leaf_LD-17-02 }
+      - { value: attendance, label_zh: 混合办公考勤争议, next: leaf_LD-17-03 }
+      - { value: injury, label_zh: 远程工伤认定, next: leaf_LD-17-04 }
+leaf_LD-17-01: { leaf: { subcategory: LD-17-01 } }
+leaf_LD-17-02: { leaf: { subcategory: LD-17-02 } }
+leaf_LD-17-03: { leaf: { subcategory: LD-17-03 } }
+leaf_LD-17-04: { leaf: { subcategory: LD-17-04 } }
+
+# --- LD-18 数字监控与隐私 ---
+q_ld18:
+  question:
+    prompt_zh: 数字监控与职场隐私权纠纷的具体情形是
+    answers:
+      - { value: device_monitor, label_zh: 工作设备监控合法性, next: leaf_LD-18-01 }
+      - { value: pii_processing, label_zh: 员工个人信息处理, next: leaf_LD-18-02 }
+      - { value: data_return, label_zh: 离职数据归还与删除, next: leaf_LD-18-03 }
+      - { value: evidence_legality, label_zh: 监控证据合法性认定, next: leaf_LD-18-04 }
+leaf_LD-18-01: { leaf: { subcategory: LD-18-01 } }
+leaf_LD-18-02: { leaf: { subcategory: LD-18-02 } }
+leaf_LD-18-03: { leaf: { subcategory: LD-18-03 } }
+leaf_LD-18-04: { leaf: { subcategory: LD-18-04 } }
+
+# --- LD-19 算法管理 ---
+q_ld19:
+  question:
+    prompt_zh: 算法管理与劳动权益纠纷的具体情形是
+    answers:
+      - { value: performance, label_zh: 算法绩效考核争议, next: leaf_LD-19-01 }
+      - { value: scheduling, label_zh: 自动化排班与休息权, next: leaf_LD-19-02 }
+      - { value: dismissal, label_zh: 算法解雇透明度, next: leaf_LD-19-03 }
+      - { value: profiling, label_zh: 数据画像与差别待遇, next: leaf_LD-19-04 }
+leaf_LD-19-01: { leaf: { subcategory: LD-19-01 } }
+leaf_LD-19-02: { leaf: { subcategory: LD-19-02 } }
+leaf_LD-19-03: { leaf: { subcategory: LD-19-03 } }
+leaf_LD-19-04: { leaf: { subcategory: LD-19-04 } }
+
+# --- LD-20 直播电商与自媒体 ---
+q_ld20:
+  question:
+    prompt_zh: 直播电商与自媒体从业者纠纷的具体情形是
+    answers:
+      - { value: streamer_relation, label_zh: 主播劳动关系认定, next: leaf_LD-20-01 }
+      - { value: mcn, label_zh: MCN机构合作关系定性, next: leaf_LD-20-02 }
+      - { value: income_split, label_zh: 直播收入与分成争议, next: leaf_LD-20-03 }
+      - { value: creator, label_zh: 自媒体创作者用工认定, next: leaf_LD-20-04 }
+      - { value: penalty, label_zh: 网红违约金与解约争议, next: leaf_LD-20-05 }
+leaf_LD-20-01: { leaf: { subcategory: LD-20-01 } }
+leaf_LD-20-02: { leaf: { subcategory: LD-20-02 } }
+leaf_LD-20-03: { leaf: { subcategory: LD-20-03 } }
+leaf_LD-20-04: { leaf: { subcategory: LD-20-04 } }
+leaf_LD-20-05: { leaf: { subcategory: LD-20-05 } }

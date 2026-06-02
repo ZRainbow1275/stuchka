@@ -7,6 +7,7 @@ import '../features/case/case_workbench_page.dart';
 import '../features/case/calculator/comp_calc_page.dart';
 import '../features/case/evidence/evidence_collector_page.dart';
 import '../features/case/flow/procedure_compare_page.dart';
+import '../features/case/flow/scenario_shell_page.dart';
 import '../features/case/document/document_host_page.dart';
 import '../features/home/standard_home_page.dart';
 import '../features/home/simple_home_page.dart';
@@ -68,6 +69,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/intake/identity',
         builder: (context, state) => const IdentitySelectPage(),
       ),
+      // 农民工欠薪 主用户路径 shell (spec frontend/04 §4.9). Hosts the pinned ScenarioProgressBar.
+      GoRoute(
+        path: '/scenario/migrant-wage/:step',
+        builder: (context, state) => ScenarioShellPage(
+          stepId: state.pathParameters['step']!,
+          caseId: state.uri.queryParameters['caseId'] ?? '',
+        ),
+      ),
       GoRoute(
         path: '/intake/diagnose',
         builder: (context, state) {
@@ -97,8 +106,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: 'documents',
-            builder: (context, state) =>
-                DocumentHostPage(caseId: state.pathParameters['id']!),
+            builder: (context, state) {
+              final templatesParam = state.uri.queryParameters['templates'];
+              return DocumentHostPage(
+                caseId: state.pathParameters['id']!,
+                templates: (templatesParam == null || templatesParam.isEmpty)
+                    ? const []
+                    : templatesParam.split(','),
+                exportRequested: state.uri.queryParameters['action'] == 'export',
+              );
+            },
           ),
           GoRoute(
             path: 'audit',

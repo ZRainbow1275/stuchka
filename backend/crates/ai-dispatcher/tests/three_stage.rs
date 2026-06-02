@@ -169,6 +169,8 @@ async fn hsd_force_local_sends_zero_cloud_requests() {
         local: None,
         templates: &templates,
         rule_request: None,
+        overseas_enabled: false,
+        audit: None,
     };
 
     let q = UserQuery::new("我的电话是13800138000帮我看看赔偿");
@@ -209,6 +211,8 @@ async fn level4_refuses_and_never_falls_back() {
         local: None,
         templates: &templates,
         rule_request: None,
+        overseas_enabled: false,
+        audit: None,
     };
     let a = answer(&UserQuery::new("赔偿多少"), &ctx).await;
     assert_eq!(a.fallback_level, 4);
@@ -248,6 +252,8 @@ async fn rule_ok_discards_ai_output() {
         local: None,
         templates: &templates,
         rule_request: Some(rule_request()),
+        overseas_enabled: false,
+        audit: None,
     };
     let a = answer(&UserQuery::new("8年工龄违法解除赔偿多少"), &ctx).await;
     assert_eq!(
@@ -293,6 +299,8 @@ async fn rule_unknown_caps_ai_into_low_bucket() {
         local: None,
         templates: &templates,
         rule_request: Some(rule_request()),
+        overseas_enabled: false,
+        audit: None,
     };
     let a = answer(&UserQuery::new("我这种情况能要赔偿吗"), &ctx).await;
     // AI was consulted (Unknown does not short-circuit) but capped into Low.
@@ -334,6 +342,8 @@ async fn high_confidence_cloud_answer_composes() {
         local: None,
         templates: &templates,
         rule_request: None,
+        overseas_enabled: false,
+        audit: None,
     };
     let a = answer(&UserQuery::new("加班费基数怎么算"), &ctx).await;
     assert_eq!(calls.load(Ordering::SeqCst), 1, "cloud consulted");

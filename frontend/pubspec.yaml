@@ -55,16 +55,44 @@ dev_dependencies:
   # AdapterWebSocketChannel 构造一个“连接挂起”的真实 WebSocketChannel（非 mock），
   # 以便在不开真实 socket 的前提下断言 Authorization Bearer 头。
   web_socket: ^1.0.1
+  # custom_lint 防线1（spec 01 §1.8）：avoid-hardcoded-colors + forbid-emoji-in-string-literal。
+  # 规则实现是真实代码，落在本仓本地 plugin 包 `tools/lints/`（custom_lint_builder 0.8.x）。
+  #
+  # 为什么这里被注释：custom_lint 0.8.x 依赖 analyzer ^8.4.0，会把本工程从 Dart 3.11 beta SDK
+  # 自带的 analyzer 9.0.0 降级到 8.4.0。实测该插件能加载并 `dart run custom_lint` 退出 0，但在
+  # 此 beta 分析服务器上 *不能确定性地产出诊断*（registry visitor 静默 no-op）。为不让一个无法
+  # 稳定触发的插件拖累整条 beta-native 工具链（且避免跨机非确定性），按 HARD CONSTRAINT 的回退路径
+  # 处置：保留真实规则代码 + 本注释说明原因，并由 test/lint/ 的扫描式测试（防线2/3 + 新增 token/
+  # emoji 扫描）作为今天的权威 enforcement。待 custom_lint 跟上 analyzer 9.x 后取消本段注释即可。
+  #
+  # 启用方式（toolchain 支持后）：取消下三行注释 + 在 tools/lints 与本工程各 `dart pub get`，
+  # 然后在 analysis_options.yaml 取消 custom_lint: 段注释。
+  # custom_lint: ^0.8.1
+  # custom_lint_builder: ^0.8.1
+  # analyzer: ^8.4.0
+  # stuchka_lints:
+  #   path: tools/lints
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/tokens/
+    - assets/tokens/tokens.base.json
+    - assets/tokens/tokens.light.json
+    - assets/tokens/tokens.dark.json
+    - assets/tokens/tokens.print.json
     - assets/web/editor/
 
-  # 思源字体本地打包（SIL OFL，禁运行时联网拉取）。R1a 若字体资产缺位则回退系统字体，
-  # 故此段保持注释直到 assets/fonts/ 落齐对应 OTF，避免 pub 校验失败。
+  # 思源 / JetBrains 字体本地打包（spec 01 §1.4 — 全部 SIL OFL，可再分发；禁运行时联网拉取）。
+  #
+  # 为保证“无 OTF 也能构建绿灯”的跨机兼容（HARD CONSTRAINT），字体的 OTF/TTF 不入 git，
+  # 而由 tools/fetch_fonts.dart（或 fetch_fonts.ps1）从官方 OFL 发布源下载到 assets/fonts/。
+  # Flutter 在声明的 font asset 缺位时 *构建会失败*，因此 fonts: 段保持注释，待 fetch 脚本
+  # 把 OTF 落齐后由开发者取消注释；StuchkaTheme.fontFamily 在缺位时回退系统字体（graceful
+  # fallback，见 lib/theme/stuchka_theme.dart 的 fontFamily 注释）。tools/fetch_fonts.dart
+  # 在写入字体后会自动把下面的 fonts: 段写回 pubspec.yaml（幂等）。
+  #
+  # --- BEGIN STUCHKA FONTS (managed by tools/fetch_fonts.dart) ---
   # fonts:
   #   - family: SourceHanSans
   #     fonts:
@@ -81,3 +109,4 @@ flutter:
   #   - family: JetBrainsMonoSC
   #     fonts:
   #       - asset: assets/fonts/JetBrainsMono-Regular.ttf
+  # --- END STUCHKA FONTS ---

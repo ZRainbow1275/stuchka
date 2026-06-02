@@ -28,6 +28,13 @@ use crate::{responses, state::AppState};
 const UNDIAGNOSED_CATEGORY: &str = "LD-00-00";
 
 /// `POST /case` request (backend/01 §1.3.1).
+///
+/// When `answerPath` is supplied (a completed 问诊树 path, prd §4.1.4), the deterministic M1
+/// [`rule_engine::DiagnosisEngine`] runs at creation time and the REAL diagnosed `LD-NN-NN`
+/// subcategory + coverage tier are stored (replacing the `LD-00-00` placeholder) and the case opens
+/// as `diagnosed` (INV-01 pure rules). When it is omitted (or the path is incomplete / abstains),
+/// the case is created `draft` with the placeholder, and the diagnosis is run later via
+/// `POST /diagnose` — keeping the legacy create-then-diagnose flow backward-compatible.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCaseReq {
@@ -39,6 +46,12 @@ pub struct CreateCaseReq {
     pub dispute_subtype: DisputeSubtype,
     pub first_description: String,
     pub kb_version_hash: String,
+    /// Optional completed 问诊树 answer path; when present, M1 diagnosis runs at creation.
+    #[serde(default)]
+    pub answer_path: Vec<String>,
+    /// Questions the user skipped during 问诊 (≥ 3 → abstention, prd §4.1.4).
+    #[serde(default)]
+    pub skipped_questions: u32,
 }
 
 /// Case DTO (backend/01 §1.3.1). `id` carries a UUID v7 36-char string (D9).
@@ -160,22 +173,55 @@ async fn create_case(State(s): State<AppState>, Json(req): Json<CreateCaseReq>) 
         manifest.global_hash.clone()
     };
 
+    // Run the deterministic M1 diagnosis engine when a completed 问诊树 path is supplied. A
+    // determinate result fills the REAL LD-NN-NN subcategory + coverage tier and opens the case as
+    // `diagnosed`; an absent / incomplete / abstaining path keeps the `LD-00-00` placeholder + draft
+    // (the engine never guesses — C-C-6 / prd §4.1.5). The diagnosis is otherwise run later via
+    // POST /diagnose. The diagnosed flag is carried out for the audit record below.
+    let mut diagnosed: Option<(String, CoverageTier, CoverageTag, f32)> = None;
+    if !req.answer_path.is_empty() {
+        if let Some(engine) = s.diagnosis_engine() {
+            let input = rule_engine::DiagnosisInput {
+                identity_type: req.identity_type,
+                dispute_subtype: req.dispute_subtype,
+                answer_path: req.answer_path.clone(),
+                skipped_questions: req.skipped_questions,
+            };
+            if let rule_engine::DiagnosisOutput::Ok(r) = engine.diagnose(&input) {
+                diagnosed = Some((
+                    r.dispute_category.clone(),
+                    r.coverage_tier,
+                    r.coverage_tag,
+                    r.confidence,
+                ));
+            }
+        }
+    }
+
     let now = Utc::now();
+    let (dispute_category, coverage_tier, status) = match &diagnosed {
+        Some((code, tier, _, _)) => (code.clone(), *tier, CaseStatus::Diagnosed),
+        // No diagnosis at creation: placeholder (well-formed LD-NN-NN as the schema requires,
+        // surfaced as `disputeCategoryId: null`) + draft.
+        None => (
+            UNDIAGNOSED_CATEGORY.to_string(),
+            CoverageTier::default(),
+            CaseStatus::Draft,
+        ),
+    };
     let case = Case {
         id: new_id(),
         identity_type: req.identity_type,
         dispute_subtype: req.dispute_subtype,
-        // Diagnosis fills the real LD-NN-NN category later (M1); the schema requires a well-formed
-        // LD-NN-NN, so a pre-diagnosis placeholder `LD-00-00` is used and surfaced as `None`.
-        dispute_category: UNDIAGNOSED_CATEGORY.to_string(),
-        coverage_tier: CoverageTier::default(),
+        dispute_category,
+        coverage_tier,
         case_occurred_at: req.case_occurred_at,
         province: req.province,
         city: req.city,
         region_code: req.region_code,
         kb_version_hash: frozen_kb_hash,
         kb_version_label: version.version_label.clone(),
-        status: CaseStatus::Draft,
+        status,
         group_id: None,
         dialogue_template_id: None,
         created_at: now,
@@ -195,13 +241,37 @@ async fn create_case(State(s): State<AppState>, Json(req): Json<CreateCaseReq>) 
         serde_json::json!({
             "case_id": case.id.to_string(),
             "action": "create",
-            "status": "draft",
+            "status": serde_json::to_value(case.status).unwrap_or(serde_json::Value::Null),
         }),
         &trace,
     )
     .await
     {
         return resp;
+    }
+
+    // When M1 diagnosis ran at creation, audit the deterministic diagnosis output (INV-06 mandatory
+    // AI key-suggestion record; the engine is rule-based, recorded as `ai_diagnosis_output` so the
+    // diagnosis surface has a uniform audit trail whether it runs here or via POST /diagnose).
+    if let Some((code, tier, tag, confidence)) = &diagnosed {
+        if let Err(resp) = crate::audit_helper::append_state_change(
+            &s,
+            audit::AuditReason::AiDiagnosisOutput,
+            case.id,
+            serde_json::json!({
+                "case_id": case.id.to_string(),
+                "dispute_category": code,
+                "coverage_tier": tier,
+                "coverage_tag": tag,
+                "confidence": confidence,
+                "engine": "deterministic_decision_tree",
+            }),
+            &trace,
+        )
+        .await
+        {
+            return resp;
+        }
     }
 
     responses::created(CaseDto::from_case(&case), trace)

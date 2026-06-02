@@ -226,6 +226,19 @@ class StuchkaSpacing extends ThemeExtension<StuchkaSpacing> {
 class StuchkaTheme {
   StuchkaTheme._();
 
+  /// The bundled UI body family (spec 01 §1.4). Only applied when the OFL OTF assets have been
+  /// fetched (tools/fetch_fonts.dart) AND the pubspec `fonts:` block is enabled — otherwise the
+  /// theme stays on the system font (graceful fallback) so the build is green on a clean machine.
+  ///
+  /// Set [fontsBundled] to true once `dart run tools/fetch_fonts.dart` has populated assets/fonts/.
+  /// Kept as a compile-time const so a missing-asset build never silently references a font that is
+  /// not packaged. The default (false) is the cross-machine safe path.
+  static const bool fontsBundled =
+      bool.fromEnvironment('STUCHKA_FONTS_BUNDLED', defaultValue: false);
+
+  /// The UI body family or null (system fallback). 'SourceHanSans' per spec 01 §1.4 when bundled.
+  static const String? uiFontFamily = fontsBundled ? 'SourceHanSans' : null;
+
   static ThemeData light() => _build(StuchkaPalette.light);
   static ThemeData dark() => _build(StuchkaPalette.dark);
 
@@ -243,8 +256,9 @@ class StuchkaTheme {
     );
     return ThemeData(
       useMaterial3: true,
-      // 思源字体本地打包后填 'SourceHanSans'；R1a 字体资产缺位时回退系统字体。
-      fontFamily: null,
+      // 思源字体本地打包后用 'SourceHanSans'（spec 01 §1.4）；字体资产缺位时回退系统字体
+      // （graceful fallback，跨机绿灯）。由 STUCHKA_FONTS_BUNDLED + tools/fetch_fonts.dart 控制。
+      fontFamily: uiFontFamily,
       colorScheme: scheme,
       scaffoldBackgroundColor: p.paper,
       textTheme: _textTheme(p),

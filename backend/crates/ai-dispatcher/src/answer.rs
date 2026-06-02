@@ -21,6 +21,18 @@ pub struct UserQuery {
     pub force_local: bool,
     /// User pre-consented to cross-border (overseas) this request.
     pub allow_cross_border: bool,
+    /// Names of the structured payload fields accompanying this request (e.g. `"phone_number"`,
+    /// `"employer_full_name"`). The data-export guard grades these via
+    /// [`crate::routing::max_grade_of_fields`] to compute `input_max_grade` (`compliance/02` §2.1 /
+    /// §3.1). Free-text-only requests leave this empty (graded conservatively as L2).
+    #[serde(default)]
+    pub structured_fields: Vec<String>,
+    /// A §4.5 forced-local case scene applies (medical leave / three-periods / minor / sexual
+    /// harassment / work-injury appraisal / criminal report / audio transcript). The caller maps
+    /// the case subtype / document kind to this flag; the guard treats it as the highest priority
+    /// (R0), overriding every user choice (INV-05). Distinct from `force_local` (a user choice).
+    #[serde(default)]
+    pub scene_forced_local: bool,
 }
 
 impl UserQuery {
@@ -31,6 +43,8 @@ impl UserQuery {
             case_id: None,
             force_local: false,
             allow_cross_border: false,
+            structured_fields: Vec::new(),
+            scene_forced_local: false,
         }
     }
 }

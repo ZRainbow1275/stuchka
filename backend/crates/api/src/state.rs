@@ -16,7 +16,7 @@ use crypto::{AgeStore, SessionDek};
 use db::Store;
 use hsd::HsdDetector;
 use kb::{Bm25Index, KbManifest, KbVersion};
-use rule_engine::RuleEngine;
+use rule_engine::{DiagnosisEngine, RuleEngine};
 use subtle::ConstantTimeEq;
 use sync::{ensure_schema, SqliteDocMetaRepo, SqliteDocRepo, SqliteDocStepRepo, SqlitePeerRepo};
 use uuid::Uuid;
@@ -44,6 +44,7 @@ struct Services {
     audit: AuditLog,
     audit_chain_ok: bool,
     rule_engine: RuleEngine,
+    diagnosis_engine: DiagnosisEngine,
     hsd: Arc<HsdDetector>,
     kb_index: Arc<Bm25Index>,
     kb_manifest: KbManifest,
@@ -135,6 +136,7 @@ impl AppState {
                     audit: svc.audit,
                     audit_chain_ok: svc.audit_chain_ok,
                     rule_engine: svc.rule_engine,
+                    diagnosis_engine: svc.diagnosis_engine,
                     hsd: svc.hsd,
                     kb_index: svc.kb_index,
                     kb_manifest: svc.kb_manifest,
@@ -185,6 +187,11 @@ impl AppState {
     /// Borrow the rule engine if attached.
     pub fn rule_engine(&self) -> Option<&RuleEngine> {
         self.inner.services.as_ref().map(|s| &s.rule_engine)
+    }
+
+    /// Borrow the deterministic M1 diagnosis engine if attached.
+    pub fn diagnosis_engine(&self) -> Option<&DiagnosisEngine> {
+        self.inner.services.as_ref().map(|s| &s.diagnosis_engine)
     }
 
     /// Borrow the high-sensitivity detector if attached.
