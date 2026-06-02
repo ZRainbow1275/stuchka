@@ -60,3 +60,16 @@ fn law_seed_parses_100_percent() {
     assert!(r.total >= 50, "law seed must have at least 50 URNs");
     assert_eq!(r.pass_rate, 1.0, "every cited LawRef URN must parse (no hallucinated ids); failures: {fails:?}");
 }
+
+#[test]
+fn abstention_300_refusal_and_bucket() {
+    let r = eval_cli::run_gate("abstention", &ds("abstention-300")).expect("abstention gate runs");
+    let fails: Vec<&String> = r.cases.iter().filter(|c| !c.pass).map(|c| &c.id).collect();
+    assert_eq!(r.total, 300, "abstention-300 must have 300 cases");
+    let bucket_hit = f64_metric(&r, "bucket_hit");
+    let refusal_rate = f64_metric(&r, "refusal_rate");
+    // INV-08: the production compute_confidence->bucket->compose path must match the spec-derived
+    // buckets (>= 90%) and must not over-refuse (Low is a heuristic follow-up, not a refusal).
+    assert!(bucket_hit >= 0.90, "bucket_hit must be >= 0.90, got {bucket_hit}; failures: {fails:?}");
+    assert!(refusal_rate <= 0.10, "refusal_rate must be <= 0.10, got {refusal_rate}");
+}

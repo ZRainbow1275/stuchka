@@ -21,6 +21,10 @@ path = "src/main.rs"
 data-model.workspace = true
 rule-engine.workspace = true
 hsd.workspace = true
+# ai-dispatcher — linked for the abstention-300 gate, which drives the REAL INV-08 three-tier path
+# (compute_confidence -> bucket -> compose) + the genuine refusal answers. It pulls tokio/reqwest in,
+# but eval-cli is a dev/CI oracle (not the shipped binary), so the extra weight is acceptable.
+ai-dispatcher.workspace = true
 # Direct path dep (not the workspace alias) so `default-features = false` actually applies: it drops
 # the optional `audit`/`db` (sqlx + tokio) wiring. export_dossier and the four GB45438 layers are NOT
 # feature-gated, so the genuine completeness pipeline stays available while the binary stays light.

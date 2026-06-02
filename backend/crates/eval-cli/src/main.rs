@@ -3,7 +3,7 @@
 //! Usage:
 //!   stuchka-eval <gate> <dataset.json> [--report <out.json>] [--pretty]
 //!
-//! `<gate>` is one of: calc | deadline | pii | doc | law. The process exits 0 once it has run and
+//! `<gate>` is one of: calc | deadline | pii | doc | law | abstention. The process exits 0 once it has run and
 //! written the report (threshold judgement is the Python `packages/eval-runner`'s job); it exits 2
 //! only on a genuine error (bad args, unreadable dataset, engine init failure).
 
@@ -14,7 +14,7 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 {
         eprintln!("usage: stuchka-eval <gate> <dataset.json> [--report <out.json>] [--pretty]");
-        eprintln!("       gate = calc | deadline | pii | doc | law");
+        eprintln!("       gate = calc | deadline | pii | doc | law | abstention");
         return ExitCode::from(2);
     }
     let gate = args[1].clone();

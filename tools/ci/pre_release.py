@@ -13,7 +13,8 @@ Gates:
   editor    npm run build && npm test          (vite UMD build + vitest)
   frontend  flutter analyze && flutter test    (analyze 0 issues + 60 widget tests)
   ai-eval   packages/eval-runner (drives the Rust eval-cli oracle): calc-50==100%, deadline-30==100%,
-            doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100% (ai/05 §5.3)
+            doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100%,
+            abstention-300 refusal<=10%/bucket_hit>=90% (ai/05 §5.3 + §5.6)
   compliance tools/qa/check_readme_first_line.py   (GPLv3 README first-line, byte-for-byte)
   compliance tools/triage/keyword_matcher.py --self-test  (Issues triage >=95% accuracy)
   product   no-emoji scan over the whole source tree (zero Emoji invariant)
@@ -180,9 +181,9 @@ def run_emoji_scan(gate: Gate) -> None:
 def run_eval_gates(gate: Gate, skip_missing: bool) -> None:
     """Run the ai/05 §5.3 evaluation gates via the Python eval-runner, which drives the genuine
     Rust eval-cli oracle (real rule-engine/hsd/document/data-model). REQUIRED: calc-50==100%,
-    deadline-30==100%, doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100%.
-    Human-graded gates (doc usability, law accuracy, fact-30) + R1b abstention-300 are reported but
-    do not block. The oracle needs cargo; absent + --skip-missing downgrades to SKIP."""
+    deadline-30==100%, doc-20 GB45438==100%, pii-200 recall>=95%/fp<=5%, law-200 structural==100%,
+    abstention-300 refusal<=10%/bucket_hit>=90%. Human-graded gates (doc usability, law accuracy,
+    fact-30) are reported but do not block. The oracle needs cargo; absent + --skip-missing -> SKIP."""
     start = time.time()
     if shutil.which("cargo") is None:
         gate.seconds = time.time() - start

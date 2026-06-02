@@ -5,6 +5,7 @@
 //! owns the §5.3 thresholds and decides pass/fail; this crate only reports genuine results so a
 //! mis-derived expectation can never silently pass.
 
+pub mod abstention;
 pub mod calc;
 pub mod common;
 pub mod deadline;
@@ -20,7 +21,7 @@ use report::GateReport;
 /// Crate identity for CI dependency-graph assertions.
 pub const CRATE_NAME: &str = "eval-cli";
 
-/// Run a single gate over its dataset. Gate names: `calc | deadline | pii | doc | law`.
+/// Run a single gate over its dataset. Gate names: `calc | deadline | pii | doc | law | abstention`.
 pub fn run_gate(gate: &str, dataset: &Path) -> Result<GateReport, String> {
     match gate {
         "calc" => calc::run(dataset),
@@ -28,8 +29,9 @@ pub fn run_gate(gate: &str, dataset: &Path) -> Result<GateReport, String> {
         "pii" => pii::run(dataset),
         "doc" => doc::run(dataset),
         "law" => law::run(dataset),
+        "abstention" => abstention::run(dataset),
         other => Err(format!(
-            "unknown gate '{other}' (expected calc|deadline|pii|doc|law)"
+            "unknown gate '{other}' (expected calc|deadline|pii|doc|law|abstention)"
         )),
     }
 }

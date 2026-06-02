@@ -26,6 +26,7 @@ DATASET_DIR = {
     "pii": "pii-200",
     "doc": "doc-20",
     "law": "law-200",
+    "abstention": "abstention-300",
 }
 
 

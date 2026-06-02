@@ -1458,6 +1458,7 @@ dependencies = [
 name = "eval-cli"
 version = "0.1.0"
 dependencies = [
+ "ai-dispatcher",
  "chrono",
  "data-model",
  "document",

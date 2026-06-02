@@ -1,8 +1,8 @@
 """Run every eval gate, print the summary, exit non-zero on any required-gate miss (ai/05 §5.10).
 
-Required automated gates: calc-50, deadline-30, doc-20 (GB45438), pii-200, law-200 (structural).
-Human process gates (doc usability, law accuracy, fact-30) and the R1b-deferred abstention-300 are
-reported but never block. Usage: python -m eval_runner.cli [--release]
+Required automated gates: calc-50, deadline-30, doc-20 (GB45438), pii-200, law-200 (structural),
+abstention-300 (INV-08 bucket_hit + refusal_rate). Human process gates (doc usability, law
+accuracy, fact-30) are reported but never block. Usage: python -m eval_runner.cli [--release]
 """
 from __future__ import annotations
 
@@ -37,11 +37,12 @@ def main(argv: list[str] | None = None) -> int:
         _safe("doc-20 (GB45438)", run_doc_20.run, release),
         _safe("pii-200", run_pii_200.run, release),
         _safe("law-200 (structural)", run_law_200.run, release),
-        # Human process gates + R1b-deferred (reported, non-blocking):
+        # R1b automated gate (INV-08 abstention; bucket_hit + refusal_rate are auto-decided):
+        _safe("abstention-300", run_abstention_300.run, release),
+        # Human process gates (reported, non-blocking):
         run_doc_20.usability_process(),
         run_law_200.accuracy_process(),
         run_fact_30.run(),
-        run_abstention_300.run(),
     ]
     ok = render_summary(outcomes)
     return 0 if ok else 1
